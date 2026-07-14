@@ -70,7 +70,8 @@ export const shareChat = createServerFn({ method: "POST" })
     if (chatErr || !chat) throw new Error("Chat not found");
     if (chat.user_id !== context.userId) throw new Error("Only the chat owner can share it");
 
-    const { data: uid, error: rpcErr } = await context.supabase.rpc("find_user_id_by_email", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: uid, error: rpcErr } = await supabaseAdmin.rpc("find_user_id_by_email", {
       _email: data.email,
     });
     if (rpcErr) throw new Error(rpcErr.message);
