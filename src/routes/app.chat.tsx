@@ -146,7 +146,7 @@ function ChatPage() {
                   key={t.id}
                   question={t.question}
                   answer={t.answer}
-                  onEmail={() => setEmailOpen(true)}
+                  onEmail={() => openEmailForTurn(t)}
                   onCitationClick={onCitationClick}
                   onFlag={async () => {
                     try {
