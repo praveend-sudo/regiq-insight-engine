@@ -63,23 +63,8 @@ export function AnswerCard({
               ))}
             </ul>
 
-            {answer.gap && (
-              <div className="flex items-start gap-2 rounded-lg border border-[color:var(--risk)]/30 bg-[color:var(--risk)]/5 p-3 text-sm text-foreground">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--risk)]" />
-                <div>
-                  <span className="font-semibold text-[color:var(--risk)]">Compliance gap detected: </span>
-                  {answer.gap}
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-lg bg-gradient-brand-soft p-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand-indigo)]">
-                Recommended Action
-              </p>
-              <p className="mt-1 text-sm text-foreground">{answer.action}</p>
-            </div>
           </div>
+
 
           <div className="flex flex-row items-center justify-center gap-4 md:flex-col md:justify-start">
             <ConfidenceRing value={answer.confidence} />
