@@ -1,30 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
+import { ChatSidebar } from "@/components/regiq/ChatSidebar";
 import {
   SUGGESTED_QUESTIONS,
+  type AnswerData,
   type ChatTurn,
   type Citation,
 } from "@/lib/mock-data";
 import { answerCompliance } from "@/lib/ai.functions";
 import { createTask, createFlagged } from "@/lib/tasks.functions";
+import {
+  createChat,
+  getChatTurns,
+  appendChatTurn,
+  renameChat,
+} from "@/lib/chats.functions";
 import { exportChatToPdf } from "@/lib/pdf-export";
 import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-
-
 
 export const Route = createFileRoute("/app/chat")({
   component: ChatPage,
 });
 
 function ChatPage() {
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
+  const [sidebarKey, setSidebarKey] = useState(0);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -35,19 +44,54 @@ function ChatPage() {
     { subject: "", body: "", title: "Email compliance summary" },
   );
   const scrollRef = useRef<HTMLDivElement>(null);
+
   const askAi = useServerFn(answerCompliance);
   const fnCreateTask = useServerFn(createTask);
   const fnCreateFlag = useServerFn(createFlagged);
+  const fnCreateChat = useServerFn(createChat);
+  const fnGetTurns = useServerFn(getChatTurns);
+  const fnAppendTurn = useServerFn(appendChatTurn);
+  const fnRenameChat = useServerFn(renameChat);
   const navigate = useNavigate();
-
 
   const activeCitations = useMemo<Citation[]>(
     () => (turns.length ? turns[turns.length - 1].answer.citations : []),
     [turns],
   );
 
-  const formatTurn = (t: ChatTurn) => {
-    return [
+  // Load chat history when selected
+  useEffect(() => {
+    if (!activeChatId) {
+      setTurns([]);
+      return;
+    }
+    (async () => {
+      try {
+        const rows = await fnGetTurns({ data: { chat_id: activeChatId } });
+        const rebuilt: ChatTurn[] = [];
+        let pendingQ: string | null = null;
+        for (const r of rows) {
+          if (r.role === "user") {
+            pendingQ = (r.content as { text?: string })?.text ?? "";
+          } else if (r.role === "assistant" && pendingQ !== null) {
+            rebuilt.push({
+              id: r.id,
+              question: pendingQ,
+              answer: r.content as AnswerData,
+            });
+            pendingQ = null;
+          }
+        }
+        setTurns(rebuilt);
+        setRefsOpen(rebuilt.length > 0);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to load chat");
+      }
+    })();
+  }, [activeChatId, fnGetTurns]);
+
+  const formatTurn = (t: ChatTurn) =>
+    [
       `Q: ${t.question}`,
       ``,
       `A: ${t.answer.summary}`,
@@ -61,7 +105,6 @@ function ChatPage() {
         (c) => `- [${c.type === "external" ? "EXT" : "INT"}] ${c.issuer} · ${c.title} — ${c.section}`,
       ),
     ].join("\n");
-  };
 
   const openEmailForTurn = (t: ChatTurn) => {
     setEmailContent({
@@ -90,13 +133,39 @@ function ChatPage() {
     setInput("");
     setThinking(true);
     try {
+      // Ensure a chat exists
+      let chatId = activeChatId;
+      let createdNew = false;
+      if (!chatId) {
+        const created = await fnCreateChat({
+          data: { title: q.slice(0, 60), project_id: pendingProjectId },
+        });
+        chatId = created.id;
+        setActiveChatId(chatId);
+        setPendingProjectId(null);
+        createdNew = true;
+      }
+
       const history = turns.flatMap((t) => [
         { role: "user" as const, content: t.question },
         { role: "assistant" as const, content: t.answer.summary },
       ]);
       const ans = await askAi({ data: { question: q, history } });
-      setTurns((prev) => [...prev, { id: crypto.randomUUID(), question: q, answer: ans }]);
+      const newTurn: ChatTurn = { id: crypto.randomUUID(), question: q, answer: ans };
+      setTurns((prev) => [...prev, newTurn]);
       setRefsOpen(true);
+
+      // Persist
+      await fnAppendTurn({ data: { chat_id: chatId, turn: newTurn } });
+      if (createdNew) {
+        // Refresh sidebar to show new chat
+        setSidebarKey((k) => k + 1);
+      } else if (turns.length === 0) {
+        // First message in existing empty chat — rename with question
+        await fnRenameChat({ data: { id: chatId, title: q.slice(0, 60) } }).catch(() => {});
+        setSidebarKey((k) => k + 1);
+      }
+
       setTimeout(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
       }, 100);
@@ -107,7 +176,6 @@ function ChatPage() {
       setThinking(false);
     }
   };
-
 
   const onCitationClick = (c: Citation) => {
     setRefsOpen(true);
@@ -127,14 +195,29 @@ function ChatPage() {
     toast.success("PDF downloaded");
   };
 
+  const startNewChat = (projectId: string | null) => {
+    setActiveChatId(null);
+    setPendingProjectId(projectId);
+    setTurns([]);
+    setInput("");
+    toast(projectId ? "New chat in project — ask a question to begin" : "New conversation started");
+  };
+
   return (
     <AppLayout
       onEmailSummary={openEmailForChat}
       onDownloadPdf={onDownloadPdf}
-      onNewChat={() => { setTurns([]); toast("New conversation started"); }}
+      onNewChat={() => startNewChat(null)}
       onToggleRefs={() => setRefsOpen((v) => !v)}
       refsOpen={refsOpen}
     >
+      <ChatSidebar
+        activeChatId={activeChatId}
+        onSelectChat={(id) => setActiveChatId(id)}
+        onCreateChat={startNewChat}
+        refreshKey={sidebarKey}
+      />
+
       <div className="flex min-w-0 flex-1 flex-col">
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
           {turns.length === 0 ? (
