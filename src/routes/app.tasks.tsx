@@ -286,13 +286,39 @@ function TasksPage() {
       </div>
 
       <NewTaskDialog open={showNew} onOpenChange={setShowNew} onSubmit={onCreate} />
+      <EditTaskDialog
+        task={editTask}
+        onClose={() => setEditTask(null)}
+        onSave={onEditSave}
+      />
       <AssignDialog
         task={assignTaskRow}
         onClose={() => setAssignTaskRow(null)}
         onAssign={onAssign}
       />
+      <EmailSummaryDialog
+        open={!!emailTask}
+        onOpenChange={(v) => { if (!v) setEmailTask(null); }}
+        title="Email task"
+        defaultSubject={emailTask ? `RegIQ Task: ${emailTask.title}` : ""}
+        defaultBody={emailTask ? formatTaskEmail(emailTask) : ""}
+      />
     </AppLayout>
   );
+}
+
+function formatTaskEmail(t: TaskRow): string {
+  const lines = [
+    `Task: ${t.title}`,
+    `Status: ${STATUS_META[t.status].label}`,
+    `Created: ${new Date(t.created_at).toLocaleDateString()}`,
+    `By: ${t.creator_name ?? "—"}`,
+    `Assigned to: ${t.assignee_name ?? (t.assigned_to ? "someone" : "unassigned")}`,
+  ];
+  if (t.description) lines.push(``, `Description:`, t.description);
+  if (t.source_question) lines.push(``, `From answer to: ${t.source_question}`);
+  if (t.remarks) lines.push(``, `Remarks:`, t.remarks);
+  return lines.join("\n");
 }
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
