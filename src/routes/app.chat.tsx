@@ -47,6 +47,8 @@ function ChatPage() {
   const [refsOpen, setRefsOpen] = useState(true);
   const [highlightedRef, setHighlightedRef] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
   const [emailContent, setEmailContent] = useState<{ subject: string; body: string; title: string }>(
     { subject: "", body: "", title: "Email compliance summary" },
   );
