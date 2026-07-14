@@ -106,7 +106,6 @@ function ChatPage() {
       `Q: ${t.question}`, ``,
       `A: ${t.answer.summary}`, ``,
       ...t.answer.bullets.map((b) => `• ${b}`), ``,
-      `Confidence: ${t.answer.confidence}%`, ``,
       `Sources:`,
       ...t.answer.citations.map(
         (c) => `- [${c.type === "external" ? "EXT" : "INT"}] ${c.issuer} · ${c.title} — ${c.section}`,
@@ -229,7 +228,6 @@ function ChatPage() {
                             id: c.id, type: c.type, issuer: c.issuer, title: c.title,
                             section: c.section, date: c.date, relevance: c.relevance, excerpt: c.excerpt,
                           })),
-                          confidence: t.answer.confidence,
                         },
                       });
                       toast.success("Flagged — view in Tasks & Flags");
@@ -337,9 +335,9 @@ function EmptyState({ onPick, newInProject }: { onPick: (q: string) => void; new
         <Sparkles className="h-8 w-8 text-white" />
       </motion.div>
       <div>
-        <h2 className="text-2xl font-bold">Ask a compliance question</h2>
+        <h2 className="text-2xl font-bold">Ask RegIQ a question</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          RegIQ searches 4,000+ regulatory circulars and your internal policies to produce a cited, gap-aware answer.
+          RegIQ searches 4,000+ regulatory circulars and your internal policies to produce a cited, multi-source answer.
         </p>
         {proj && (
           <p className="mt-2 inline-block rounded-full bg-gradient-brand-soft px-3 py-1 text-xs font-medium text-[color:var(--brand-indigo)]">

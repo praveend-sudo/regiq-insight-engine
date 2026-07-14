@@ -8,7 +8,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ConfidenceRing } from "./ConfidenceRing";
 import type { AnswerData, Citation } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -52,28 +51,20 @@ export function AnswerCard({
         transition={{ duration: 0.4 }}
         className="rounded-2xl border bg-card p-5 shadow-card"
       >
-        <div className="flex flex-col gap-4 md:flex-row">
-          <div className="flex-1 space-y-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--brand-violet)]">
-              <Sparkles className="h-3.5 w-3.5" /> RegIQ Analysis
-            </div>
-            <p className="text-sm leading-relaxed text-foreground">{answer.summary}</p>
-
-            <ul className="space-y-2">
-              {answer.bullets.map((b, i) => (
-                <li key={i} className="flex gap-2 text-sm text-foreground/90">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--brand-cyan)]" />
-                  {b}
-                </li>
-              ))}
-            </ul>
-
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--brand-violet)]">
+            <Sparkles className="h-3.5 w-3.5" /> RegIQ Analysis
           </div>
+          <p className="text-sm leading-relaxed text-foreground">{answer.summary}</p>
 
-
-          <div className="flex flex-row items-center justify-center gap-4 md:flex-col md:justify-start">
-            <ConfidenceRing value={answer.confidence} />
-          </div>
+          <ul className="space-y-2">
+            {answer.bullets.map((b, i) => (
+              <li key={i} className="flex gap-2 text-sm text-foreground/90">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--brand-cyan)]" />
+                {b}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Citations */}

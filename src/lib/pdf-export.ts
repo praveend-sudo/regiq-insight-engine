@@ -58,10 +58,6 @@ export function exportChatToPdf(turns: ChatTurn[]) {
     });
     y += 6;
 
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(37, 99, 235);
-    doc.text(`Confidence: ${t.answer.confidence}%`, margin, y);
-    y += 14;
     doc.setFont("helvetica", "normal");
     doc.setTextColor(80, 80, 100);
     doc.setFontSize(9);

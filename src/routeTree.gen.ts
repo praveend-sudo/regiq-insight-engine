@@ -17,7 +17,6 @@ import { Route as AppTasksRouteImport } from './routes/app.tasks'
 import { Route as AppSourcesRouteImport } from './routes/app.sources'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
-import { Route as AppInsightsRouteImport } from './routes/app.insights'
 import { Route as AppChatRouteImport } from './routes/app.chat'
 
 const AuthRoute = AuthRouteImport.update({
@@ -60,11 +59,6 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
-const AppInsightsRoute = AppInsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppChatRoute = AppChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -76,7 +70,6 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/chat': typeof AppChatRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -87,7 +80,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/chat': typeof AppChatRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -100,7 +92,6 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/chat': typeof AppChatRoute
-  '/app/insights': typeof AppInsightsRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -114,7 +105,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/chat'
-    | '/app/insights'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -125,7 +115,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/chat'
-    | '/app/insights'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -137,7 +126,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/chat'
-    | '/app/insights'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -209,13 +197,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/insights': {
-      id: '/app/insights'
-      path: '/insights'
-      fullPath: '/app/insights'
-      preLoaderRoute: typeof AppInsightsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/chat': {
       id: '/app/chat'
       path: '/chat'
@@ -228,7 +209,6 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
-  AppInsightsRoute: typeof AppInsightsRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSourcesRoute: typeof AppSourcesRoute
@@ -238,7 +218,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
-  AppInsightsRoute: AppInsightsRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSourcesRoute: AppSourcesRoute,
@@ -256,13 +235,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -3,7 +3,6 @@ import {
   MessageSquareText,
   Database,
   Bell,
-  BarChart3,
   Settings,
   LogOut,
   Search,
@@ -22,8 +21,6 @@ import {
   Trash2,
   Pencil,
   MessageSquarePlus,
-  Type,
-  Minus,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -46,20 +43,18 @@ import {
 import type { ChatRow, ProjectRow } from "@/lib/chats.functions";
 
 const NAV = [
-  { to: "/app/chat", label: "Ask Compliance", icon: MessageSquareText, badge: null, group: "chat" as const },
+  { to: "/app/chat", label: "Ask RegIQ", icon: MessageSquareText, badge: null, group: "chat" as const },
   { to: "/app/tasks", label: "Tasks & Flags", icon: CheckSquare, badge: null, group: null },
   { to: "/app/sources", label: "Data Sources", icon: Database, badge: null, group: null },
   { to: "/app/notifications", label: "Notifications", icon: Bell, badge: "live" as const, group: null },
-  { to: "/app/insights", label: "Insights", icon: BarChart3, badge: null, group: null },
   { to: "/app/settings", label: "Settings", icon: Settings, badge: null, group: "settings" as const },
 ];
 
 const TITLES: Record<string, string> = {
-  "/app/chat": "Ask Compliance",
+  "/app/chat": "Ask RegIQ",
   "/app/tasks": "Tasks & Flags",
   "/app/sources": "Data Sources",
   "/app/notifications": "Notifications",
-  "/app/insights": "Insights",
   "/app/settings": "Settings",
 };
 
@@ -211,8 +206,7 @@ function AppLayoutInner({
   );
 }
 
-// ---------------- Projects nav (under Ask Compliance) ----------------
-type Density = "compact" | "default" | "comfortable";
+// ---------------- Projects nav (under Ask RegIQ) ----------------
 type ChatSize = "sm" | "md" | "lg";
 
 function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
@@ -222,20 +216,6 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
-  const [density, setDensity] = useState<Density>("default");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("regiq-sidebar-density") as Density | null;
-    if (saved && ["compact", "default", "comfortable"].includes(saved)) {
-      setDensity(saved);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("regiq-sidebar-density", density);
-  }, [density]);
-
-  const chatSize: ChatSize = density === "compact" ? "sm" : density === "comfortable" ? "lg" : "md";
 
   const chatsIn = (pid: string) => chats.filter((c) => c.project_id === pid);
 
@@ -248,7 +228,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   };
 
   return (
-      <div className="ml-2 mt-1">
+    <div className="ml-2 mt-1">
       <div className="flex items-center gap-1 px-1.5">
         <button
           className="flex flex-1 items-center gap-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
@@ -257,24 +237,6 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
           {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <span>Projects</span>
         </button>
-        <div className="flex items-center rounded-md border bg-muted/40 p-0.5" title="Chat title density">
-          {(["compact", "default", "comfortable"] as Density[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => setDensity(d)}
-              className={cn(
-                "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
-                density === d
-                  ? "bg-background text-[color:var(--brand-indigo)] shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {d === "compact" && <Minus className="h-3 w-3" />}
-              {d === "default" && <Type className="h-3 w-3" />}
-              {d === "comfortable" && <Plus className="h-3 w-3" />}
-            </button>
-          ))}
-        </div>
         <button
           className="p-0.5 text-muted-foreground hover:text-[color:var(--brand-indigo)]"
           onClick={() => setDialogOpen(true)}
@@ -328,7 +290,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
                       <p className="px-2 py-0.5 text-[11px] text-muted-foreground/60">Empty</p>
                     )}
                     {list.map((c) => (
-                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size={chatSize} />
+                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size="md" />
                     ))}
                   </div>
                 )}
