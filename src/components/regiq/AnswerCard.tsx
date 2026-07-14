@@ -18,11 +18,15 @@ export function AnswerCard({
   answer,
   onEmail,
   onCitationClick,
+  onFlag,
+  onCreateTask,
 }: {
   question: string;
   answer: AnswerData;
   onEmail: () => void;
   onCitationClick: (c: Citation) => void;
+  onFlag?: () => void;
+  onCreateTask?: () => void;
 }) {
   const copy = () => {
     void navigator.clipboard.writeText(
@@ -30,6 +34,7 @@ export function AnswerCard({
     );
     toast.success("Answer copied to clipboard");
   };
+
 
   return (
     <div className="space-y-4">
@@ -101,8 +106,9 @@ export function AnswerCard({
         <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3">
           <ActionBtn onClick={onEmail} icon={<Mail className="h-3.5 w-3.5" />}>Email</ActionBtn>
           <ActionBtn onClick={copy} icon={<Copy className="h-3.5 w-3.5" />}>Copy</ActionBtn>
-          <ActionBtn onClick={() => toast("Flagged for review")} icon={<Flag className="h-3.5 w-3.5" />}>Flag</ActionBtn>
-          <ActionBtn onClick={() => toast.success("Task created")} icon={<CheckSquare className="h-3.5 w-3.5" />}>Create task</ActionBtn>
+          <ActionBtn onClick={() => onFlag ? onFlag() : toast("Flagged for review")} icon={<Flag className="h-3.5 w-3.5" />}>Flag</ActionBtn>
+          <ActionBtn onClick={() => onCreateTask ? onCreateTask() : toast.success("Task created")} icon={<CheckSquare className="h-3.5 w-3.5" />}>Create task</ActionBtn>
+
           <ActionBtn onClick={() => toast("Regenerating...")} icon={<RefreshCw className="h-3.5 w-3.5" />}>Regenerate</ActionBtn>
         </div>
       </motion.div>

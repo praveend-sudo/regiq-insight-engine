@@ -12,6 +12,7 @@ import {
   Plus,
   PanelRightOpen,
   PanelRightClose,
+  CheckSquare,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { toast } from "sonner";
 
 const NAV = [
   { to: "/app/chat", label: "Ask Compliance", icon: MessageSquareText, badge: null },
+  { to: "/app/tasks", label: "Tasks & Flags", icon: CheckSquare, badge: null },
   { to: "/app/sources", label: "Data Sources", icon: Database, badge: null },
   { to: "/app/notifications", label: "Notifications", icon: Bell, badge: "live" as const },
   { to: "/app/insights", label: "Insights", icon: BarChart3, badge: null },
@@ -30,11 +32,13 @@ const NAV = [
 
 const TITLES: Record<string, string> = {
   "/app/chat": "Ask Compliance",
+  "/app/tasks": "Tasks & Flags",
   "/app/sources": "Data Sources",
   "/app/notifications": "Notifications",
   "/app/insights": "Insights",
   "/app/settings": "Settings",
 };
+
 
 export function AppLayout({
   children,
