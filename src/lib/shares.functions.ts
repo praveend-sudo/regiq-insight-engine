@@ -26,21 +26,27 @@ export const listSharesForChat = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
     const ids = (rows ?? []).map((r) => r.shared_with);
-    let profiles: Record<string, { email: string | null; full_name: string | null }> = {};
+    const info: Record<string, { email: string | null; full_name: string | null }> = {};
     if (ids.length) {
       const { data: profs } = await context.supabase
         .from("profiles")
-        .select("id, email, full_name")
+        .select("id, full_name")
         .in("id", ids);
-      profiles = Object.fromEntries(
-        (profs ?? []).map((p) => [p.id, { email: p.email, full_name: p.full_name }]),
-      );
+      for (const p of profs ?? []) info[p.id] = { email: null, full_name: p.full_name };
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      for (const uid of ids) {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (u?.user?.email) {
+          info[uid] = { email: u.user.email, full_name: info[uid]?.full_name ?? null };
+        }
+      }
     }
     return (rows ?? []).map((r) => ({
       ...r,
-      recipient_email: profiles[r.shared_with]?.email ?? null,
-      recipient_name: profiles[r.shared_with]?.full_name ?? null,
+      recipient_email: info[r.shared_with]?.email ?? null,
+      recipient_name: info[r.shared_with]?.full_name ?? null,
     })) as ShareRow[];
+
   });
 
 export const shareChat = createServerFn({ method: "POST" })
