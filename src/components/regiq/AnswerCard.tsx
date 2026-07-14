@@ -26,7 +26,7 @@ export function AnswerCard({
 }) {
   const copy = () => {
     void navigator.clipboard.writeText(
-      `${answer.summary}\n\n${answer.bullets.map((b) => "• " + b).join("\n")}\n\nRecommended: ${answer.action}`,
+      `${answer.summary}\n\n${answer.bullets.map((b) => "• " + b).join("\n")}`,
     );
     toast.success("Answer copied to clipboard");
   };
