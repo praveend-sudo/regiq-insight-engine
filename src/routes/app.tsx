@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectsChatsProvider } from "@/hooks/use-projects-chats";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -8,5 +9,9 @@ export const Route = createFileRoute("/app")({
     if (!data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: () => (
+    <ProjectsChatsProvider>
+      <Outlet />
+    </ProjectsChatsProvider>
+  ),
 });
