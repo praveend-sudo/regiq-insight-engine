@@ -249,7 +249,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   };
 
   return (
-    <div className="ml-2 mt-1">
+      <div className="ml-2 mt-1">
       <div className="flex items-center gap-1 px-1.5">
         <button
           className="flex flex-1 items-center gap-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
@@ -258,6 +258,24 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
           {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <span>Projects</span>
         </button>
+        <div className="flex items-center rounded-md border bg-muted/40 p-0.5" title="Chat title density">
+          {(["compact", "default", "comfortable"] as Density[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDensity(d)}
+              className={cn(
+                "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                density === d
+                  ? "bg-background text-[color:var(--brand-indigo)] shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {d === "compact" && <Minus className="h-3 w-3" />}
+              {d === "default" && <Type className="h-3 w-3" />}
+              {d === "comfortable" && <PlusIcon className="h-3 w-3" />}
+            </button>
+          ))}
+        </div>
         <button
           className="p-0.5 text-muted-foreground hover:text-[color:var(--brand-indigo)]"
           onClick={() => setDialogOpen(true)}
