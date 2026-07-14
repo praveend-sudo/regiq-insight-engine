@@ -136,6 +136,17 @@ function TasksPage() {
     }
   };
 
+  const onEditSave = async (id: string, title: string, description: string) => {
+    try {
+      const updated = await fnUpdate({ data: { id, title, description: description || null } });
+      setTasks((p) => p.map((t) => (t.id === id ? { ...t, ...(updated as TaskRow) } : t)));
+      setEditTask(null);
+      toast.success("Task updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    }
+  };
+
   const onAssign = async (row: TaskRow, email: string | null) => {
     try {
       const updated = await fnAssign({ data: { id: row.id, email } });
