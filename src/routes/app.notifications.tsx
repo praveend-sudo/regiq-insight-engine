@@ -6,7 +6,7 @@ import { SEED_NOTIFICATIONS } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { IssuerBadge } from "@/components/regiq/ReferencesPanel";
-import { Mail, ScanSearch, MessageSquareText, Bell } from "lucide-react";
+import { Mail, MessageSquareText, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/notifications")({
@@ -130,10 +130,8 @@ function NotificationsPage() {
                         <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => toast.success("Summary email drafted")}>
                           <Mail className="h-3.5 w-3.5" /> Email summary
                         </Button>
-                        <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => toast("Gap analysis started")}>
-                          <ScanSearch className="h-3.5 w-3.5" /> Run gap analysis
-                        </Button>
                         <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => toast("Opening chat with context...")}>
+
                           <MessageSquareText className="h-3.5 w-3.5" /> Ask about this
                         </Button>
                       </div>
