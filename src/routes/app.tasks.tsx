@@ -577,3 +577,52 @@ function AssignDialog({
     </Dialog>
   );
 }
+
+function EditTaskDialog({
+  task,
+  onClose,
+  onSave,
+}: {
+  task: TaskRow | null;
+  onClose: () => void;
+  onSave: (id: string, title: string, description: string) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDesc(task.description ?? "");
+    }
+  }, [task]);
+  return (
+    <Dialog open={!!task} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit task</DialogTitle>
+          <DialogDescription>Update the title or description.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            className="bg-gradient-brand text-white"
+            disabled={!title.trim()}
+            onClick={() => task && onSave(task.id, title.trim(), desc.trim())}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
