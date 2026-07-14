@@ -34,8 +34,9 @@ import {
 } from "@/lib/tasks.functions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckSquare, Flag, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { CheckSquare, Flag, Mail, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
 
 export const Route = createFileRoute("/app/tasks")({
   component: TasksPage,
@@ -54,6 +55,8 @@ function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [editTask, setEditTask] = useState<TaskRow | null>(null);
+  const [emailTask, setEmailTask] = useState<TaskRow | null>(null);
   const [assignTaskRow, setAssignTaskRow] = useState<TaskRow | null>(null);
 
   const fnList = useServerFn(listTasks);
@@ -130,6 +133,17 @@ function TasksPage() {
       toast.success("Task created");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Create failed");
+    }
+  };
+
+  const onEditSave = async (id: string, title: string, description: string) => {
+    try {
+      const updated = await fnUpdate({ data: { id, title, description: description || null } });
+      setTasks((p) => p.map((t) => (t.id === id ? { ...t, ...(updated as TaskRow) } : t)));
+      setEditTask(null);
+      toast.success("Task updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
     }
   };
 
@@ -214,6 +228,8 @@ function TasksPage() {
                       onRemarks={(r) => onRemarks(t, r)}
                       onDelete={() => onDelete(t)}
                       onAssign={() => setAssignTaskRow(t)}
+                      onEdit={() => setEditTask(t)}
+                      onEmail={() => setEmailTask(t)}
                     />
                   ))}
                 </AnimatePresence>
@@ -270,13 +286,39 @@ function TasksPage() {
       </div>
 
       <NewTaskDialog open={showNew} onOpenChange={setShowNew} onSubmit={onCreate} />
+      <EditTaskDialog
+        task={editTask}
+        onClose={() => setEditTask(null)}
+        onSave={onEditSave}
+      />
       <AssignDialog
         task={assignTaskRow}
         onClose={() => setAssignTaskRow(null)}
         onAssign={onAssign}
       />
+      <EmailSummaryDialog
+        open={!!emailTask}
+        onOpenChange={(v) => { if (!v) setEmailTask(null); }}
+        title="Email task"
+        defaultSubject={emailTask ? `RegIQ Task: ${emailTask.title}` : ""}
+        defaultBody={emailTask ? formatTaskEmail(emailTask) : ""}
+      />
     </AppLayout>
   );
+}
+
+function formatTaskEmail(t: TaskRow): string {
+  const lines = [
+    `Task: ${t.title}`,
+    `Status: ${STATUS_META[t.status].label}`,
+    `Created: ${new Date(t.created_at).toLocaleDateString()}`,
+    `By: ${t.creator_name ?? "—"}`,
+    `Assigned to: ${t.assignee_name ?? (t.assigned_to ? "someone" : "unassigned")}`,
+  ];
+  if (t.description) lines.push(``, `Description:`, t.description);
+  if (t.source_question) lines.push(``, `From answer to: ${t.source_question}`);
+  if (t.remarks) lines.push(``, `Remarks:`, t.remarks);
+  return lines.join("\n");
 }
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -327,6 +369,8 @@ function TaskCard({
   onRemarks,
   onDelete,
   onAssign,
+  onEdit,
+  onEmail,
 }: {
   task: TaskRow;
   isOwner: boolean;
@@ -334,6 +378,8 @@ function TaskCard({
   onRemarks: (r: string) => void;
   onDelete: () => void;
   onAssign: () => void;
+  onEdit: () => void;
+  onEmail: () => void;
 }) {
   const [remarks, setRemarks] = useState(task.remarks ?? "");
   const [dirty, setDirty] = useState(false);
@@ -355,7 +401,7 @@ function TaskCard({
             </span>
           </div>
           {task.description && (
-            <p className="mt-1 text-sm text-foreground/80">{task.description}</p>
+            <p className="mt-1 text-sm text-foreground/80 whitespace-pre-wrap">{task.description}</p>
           )}
           {task.source_question && (
             <div className="mt-2 rounded-lg border-l-2 border-[color:var(--brand-violet)] bg-gradient-brand-soft/40 p-2 text-xs text-muted-foreground">
@@ -390,6 +436,14 @@ function TaskCard({
               <SelectItem value="done">Done</SelectItem>
             </SelectContent>
           </Select>
+          {isOwner && (
+            <Button variant="ghost" size="icon" onClick={onEdit} title="Edit">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={onEmail} title="Email task">
+            <Mail className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={onAssign} title="Assign">
             <UserPlus className="h-4 w-4" />
           </Button>
@@ -517,6 +571,55 @@ function AssignDialog({
             onClick={() => task && onAssign(task, email.trim())}
           >
             Assign
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditTaskDialog({
+  task,
+  onClose,
+  onSave,
+}: {
+  task: TaskRow | null;
+  onClose: () => void;
+  onSave: (id: string, title: string, description: string) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDesc(task.description ?? "");
+    }
+  }, [task]);
+  return (
+    <Dialog open={!!task} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit task</DialogTitle>
+          <DialogDescription>Update the title or description.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            className="bg-gradient-brand text-white"
+            disabled={!title.trim()}
+            onClick={() => task && onSave(task.id, title.trim(), desc.trim())}
+          >
+            Save
           </Button>
         </DialogFooter>
       </DialogContent>
