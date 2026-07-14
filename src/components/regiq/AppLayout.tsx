@@ -329,7 +329,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
                       <p className="px-2 py-0.5 text-[11px] text-muted-foreground/60">Empty</p>
                     )}
                     {list.map((c) => (
-                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size="md" />
+                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size={chatSize} />
                     ))}
                   </div>
                 )}
