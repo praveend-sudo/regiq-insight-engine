@@ -134,18 +134,6 @@ function RefCard({ c, highlighted }: { c: Citation; highlighted?: boolean }) {
           </p>
         </div>
       </div>
-      <div className="mt-3">
-        <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Relevance</span>
-          <span className="font-semibold text-[color:var(--brand-cyan)]">{c.relevance}%</span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-gradient-cyan"
-            style={{ width: `${c.relevance}%` }}
-          />
-        </div>
-      </div>
       <p className="mt-3 rounded-md bg-muted/50 p-2 text-xs italic leading-relaxed text-foreground/80">
         "{c.excerpt}"
       </p>
