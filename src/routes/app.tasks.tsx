@@ -228,6 +228,8 @@ function TasksPage() {
                       onRemarks={(r) => onRemarks(t, r)}
                       onDelete={() => onDelete(t)}
                       onAssign={() => setAssignTaskRow(t)}
+                      onEdit={() => setEditTask(t)}
+                      onEmail={() => setEmailTask(t)}
                     />
                   ))}
                 </AnimatePresence>
