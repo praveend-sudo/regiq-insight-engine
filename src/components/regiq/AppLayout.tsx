@@ -72,7 +72,10 @@ export function AppLayout({
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r bg-sidebar">
         <div className="bg-gradient-brand p-5">
-          <RegIQLogo onDark size="lg" />
+          <div className="flex items-center gap-2">
+            <RegIQLogo onDark size="lg" />
+            <span className="text-2xl leading-none" aria-label="Sri Lanka" title="Sri Lanka">🇱🇰</span>
+          </div>
           <p className="mt-1 text-xs font-medium text-white/70">
             AI Compliance Assistant
           </p>
