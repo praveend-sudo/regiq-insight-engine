@@ -9,6 +9,7 @@ import {
   Search,
   Mail,
   Download,
+  Share2,
   Plus,
   PanelRightOpen,
   PanelRightClose,
