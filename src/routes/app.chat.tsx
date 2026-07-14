@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
-import { ChatSidebar } from "@/components/regiq/ChatSidebar";
 import {
   SUGGESTED_QUESTIONS,
   type AnswerData,
@@ -24,16 +25,22 @@ import {
 import { exportChatToPdf } from "@/lib/pdf-export";
 import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "@tanstack/react-router";
+import { useProjectsChats } from "@/hooks/use-projects-chats";
+
+const chatSearchSchema = z.object({
+  chatId: fallback(z.string().optional(), undefined),
+  newIn: fallback(z.string().optional(), undefined),
+});
 
 export const Route = createFileRoute("/app/chat")({
+  validateSearch: zodValidator(chatSearchSchema),
   component: ChatPage,
 });
 
 function ChatPage() {
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
-  const [sidebarKey, setSidebarKey] = useState(0);
+  const { chatId, newIn } = Route.useSearch();
+  const navigate = useNavigate();
+
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -52,22 +59,22 @@ function ChatPage() {
   const fnGetTurns = useServerFn(getChatTurns);
   const fnAppendTurn = useServerFn(appendChatTurn);
   const fnRenameChat = useServerFn(renameChat);
-  const navigate = useNavigate();
+  const { refresh } = useProjectsChats();
 
   const activeCitations = useMemo<Citation[]>(
     () => (turns.length ? turns[turns.length - 1].answer.citations : []),
     [turns],
   );
 
-  // Load chat history when selected
+  // Load history when chatId changes
   useEffect(() => {
-    if (!activeChatId) {
+    if (!chatId) {
       setTurns([]);
       return;
     }
     (async () => {
       try {
-        const rows = await fnGetTurns({ data: { chat_id: activeChatId } });
+        const rows = await fnGetTurns({ data: { chat_id: chatId } });
         const rebuilt: ChatTurn[] = [];
         let pendingQ: string | null = null;
         for (const r of rows) {
@@ -88,18 +95,14 @@ function ChatPage() {
         toast.error(e instanceof Error ? e.message : "Failed to load chat");
       }
     })();
-  }, [activeChatId, fnGetTurns]);
+  }, [chatId, fnGetTurns]);
 
   const formatTurn = (t: ChatTurn) =>
     [
-      `Q: ${t.question}`,
-      ``,
-      `A: ${t.answer.summary}`,
-      ``,
-      ...t.answer.bullets.map((b) => `• ${b}`),
-      ``,
-      `Confidence: ${t.answer.confidence}%`,
-      ``,
+      `Q: ${t.question}`, ``,
+      `A: ${t.answer.summary}`, ``,
+      ...t.answer.bullets.map((b) => `• ${b}`), ``,
+      `Confidence: ${t.answer.confidence}%`, ``,
       `Sources:`,
       ...t.answer.citations.map(
         (c) => `- [${c.type === "external" ? "EXT" : "INT"}] ${c.issuer} · ${c.title} — ${c.section}`,
@@ -116,10 +119,7 @@ function ChatPage() {
   };
 
   const openEmailForChat = () => {
-    if (turns.length === 0) {
-      toast.error("Ask a question first");
-      return;
-    }
+    if (turns.length === 0) { toast.error("Ask a question first"); return; }
     setEmailContent({
       title: "Email full chat",
       subject: `RegIQ Chat Summary (${turns.length} question${turns.length === 1 ? "" : "s"})`,
@@ -133,17 +133,16 @@ function ChatPage() {
     setInput("");
     setThinking(true);
     try {
-      // Ensure a chat exists
-      let chatId = activeChatId;
+      let currentChatId = chatId;
       let createdNew = false;
-      if (!chatId) {
+      if (!currentChatId) {
         const created = await fnCreateChat({
-          data: { title: q.slice(0, 60), project_id: pendingProjectId },
+          data: { title: q.slice(0, 60), project_id: newIn ?? null },
         });
-        chatId = created.id;
-        setActiveChatId(chatId);
-        setPendingProjectId(null);
+        currentChatId = created.id;
         createdNew = true;
+        // Reflect in URL (removes newIn, adds chatId)
+        navigate({ to: "/app/chat", search: { chatId: created.id }, replace: true });
       }
 
       const history = turns.flatMap((t) => [
@@ -155,23 +154,17 @@ function ChatPage() {
       setTurns((prev) => [...prev, newTurn]);
       setRefsOpen(true);
 
-      // Persist
-      await fnAppendTurn({ data: { chat_id: chatId, turn: newTurn } });
-      if (createdNew) {
-        // Refresh sidebar to show new chat
-        setSidebarKey((k) => k + 1);
-      } else if (turns.length === 0) {
-        // First message in existing empty chat — rename with question
-        await fnRenameChat({ data: { id: chatId, title: q.slice(0, 60) } }).catch(() => {});
-        setSidebarKey((k) => k + 1);
+      await fnAppendTurn({ data: { chat_id: currentChatId, turn: newTurn } });
+      if (!createdNew && turns.length === 0) {
+        await fnRenameChat({ data: { id: currentChatId, title: q.slice(0, 60) } }).catch(() => {});
       }
+      await refresh();
 
       setTimeout(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
       }, 100);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "AI request failed";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "AI request failed");
     } finally {
       setThinking(false);
     }
@@ -187,41 +180,29 @@ function ChatPage() {
   };
 
   const onDownloadPdf = () => {
-    if (turns.length === 0) {
-      toast.error("Ask a question first");
-      return;
-    }
+    if (turns.length === 0) { toast.error("Ask a question first"); return; }
     exportChatToPdf(turns);
     toast.success("PDF downloaded");
   };
 
-  const startNewChat = (projectId: string | null) => {
-    setActiveChatId(null);
-    setPendingProjectId(projectId);
+  const startNewChat = () => {
+    navigate({ to: "/app/chat", search: {} });
     setTurns([]);
     setInput("");
-    toast(projectId ? "New chat in project — ask a question to begin" : "New conversation started");
   };
 
   return (
     <AppLayout
       onEmailSummary={openEmailForChat}
       onDownloadPdf={onDownloadPdf}
-      onNewChat={() => startNewChat(null)}
+      onNewChat={startNewChat}
       onToggleRefs={() => setRefsOpen((v) => !v)}
       refsOpen={refsOpen}
     >
-      <ChatSidebar
-        activeChatId={activeChatId}
-        onSelectChat={(id) => setActiveChatId(id)}
-        onCreateChat={startNewChat}
-        refreshKey={sidebarKey}
-      />
-
       <div className="flex min-w-0 flex-1 flex-col">
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
           {turns.length === 0 ? (
-            <EmptyState onPick={ask} />
+            <EmptyState onPick={ask} newInProject={newIn ?? null} />
           ) : (
             <div className="mx-auto max-w-3xl space-y-8">
               {turns.map((t) => (
@@ -335,7 +316,9 @@ function ChatPage() {
   );
 }
 
-function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+function EmptyState({ onPick, newInProject }: { onPick: (q: string) => void; newInProject: string | null }) {
+  const { projects } = useProjectsChats();
+  const proj = newInProject ? projects.find((p) => p.id === newInProject) : null;
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 pt-16 text-center">
       <motion.div
@@ -350,6 +333,11 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
         <p className="mt-1 text-sm text-muted-foreground">
           RegIQ searches 4,000+ regulatory circulars and your internal policies to produce a cited, gap-aware answer.
         </p>
+        {proj && (
+          <p className="mt-2 inline-block rounded-full bg-gradient-brand-soft px-3 py-1 text-xs font-medium text-[color:var(--brand-indigo)]">
+            New chat in project · {proj.name}
+          </p>
+        )}
       </div>
       <div className="grid w-full gap-2 sm:grid-cols-2">
         {SUGGESTED_QUESTIONS.map((q) => (
