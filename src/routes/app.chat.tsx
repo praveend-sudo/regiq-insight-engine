@@ -33,6 +33,10 @@ function ChatPage() {
   const [emailOpen, setEmailOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const askAi = useServerFn(answerCompliance);
+  const fnCreateTask = useServerFn(createTask);
+  const fnCreateFlag = useServerFn(createFlagged);
+  const navigate = useNavigate();
+
 
   const activeCitations = useMemo<Citation[]>(
     () => (turns.length ? turns[turns.length - 1].answer.citations : []),
