@@ -7,15 +7,11 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from "recharts";
 import { AppLayout } from "@/components/regiq/AppLayout";
-import { AI_RISKS, GAPS_BY_CATEGORY, INSIGHT_KPIS, REGULATORY_TIMELINE } from "@/lib/mock-data";
+import { INSIGHT_KPIS, REGULATORY_TIMELINE } from "@/lib/mock-data";
 import { ConfidenceRing } from "@/components/regiq/ConfidenceRing";
-import { AlertTriangle, CalendarClock, TrendingUp } from "lucide-react";
+import { CalendarClock, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/app/insights")({
   component: InsightsPage,
