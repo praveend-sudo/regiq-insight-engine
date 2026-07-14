@@ -55,6 +55,8 @@ function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [editTask, setEditTask] = useState<TaskRow | null>(null);
+  const [emailTask, setEmailTask] = useState<TaskRow | null>(null);
   const [assignTaskRow, setAssignTaskRow] = useState<TaskRow | null>(null);
 
   const fnList = useServerFn(listTasks);
