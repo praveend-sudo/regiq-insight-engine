@@ -228,7 +228,6 @@ function ChatPage() {
                             id: c.id, type: c.type, issuer: c.issuer, title: c.title,
                             section: c.section, date: c.date, relevance: c.relevance, excerpt: c.excerpt,
                           })),
-                          confidence: t.answer.confidence,
                         },
                       });
                       toast.success("Flagged — view in Tasks & Flags");
