@@ -271,7 +271,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
             >
               {d === "compact" && <Minus className="h-3 w-3" />}
               {d === "default" && <Type className="h-3 w-3" />}
-              {d === "comfortable" && <PlusIcon className="h-3 w-3" />}
+              {d === "comfortable" && <Plus className="h-3 w-3" />}
             </button>
           ))}
         </div>
