@@ -1,16 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
 import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
 import {
-  pickAnswerForQuery,
   SUGGESTED_QUESTIONS,
   type ChatTurn,
   type Citation,
 } from "@/lib/mock-data";
+import { answerCompliance } from "@/lib/ai.functions";
 import { exportChatToPdf } from "@/lib/pdf-export";
 import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -27,26 +28,36 @@ function ChatPage() {
   const [highlightedRef, setHighlightedRef] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const askAi = useServerFn(answerCompliance);
 
   const activeCitations = useMemo<Citation[]>(
     () => (turns.length ? turns[turns.length - 1].answer.citations : []),
     [turns],
   );
 
-  const ask = (q: string) => {
-    if (!q.trim()) return;
+  const ask = async (q: string) => {
+    if (!q.trim() || thinking) return;
     setInput("");
     setThinking(true);
-    setTimeout(() => {
-      const ans = pickAnswerForQuery(q);
+    try {
+      const history = turns.flatMap((t) => [
+        { role: "user" as const, content: t.question },
+        { role: "assistant" as const, content: t.answer.summary },
+      ]);
+      const ans = await askAi({ data: { question: q, history } });
       setTurns((prev) => [...prev, { id: crypto.randomUUID(), question: q, answer: ans }]);
-      setThinking(false);
       setRefsOpen(true);
       setTimeout(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
       }, 100);
-    }, 1400);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI request failed";
+      toast.error(msg);
+    } finally {
+      setThinking(false);
+    }
   };
+
 
   const onCitationClick = (c: Citation) => {
     setRefsOpen(true);

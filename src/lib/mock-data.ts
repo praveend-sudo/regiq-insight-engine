@@ -12,10 +12,8 @@ export type Citation = {
 export type AnswerData = {
   summary: string;
   bullets: string[];
-  action: string;
   confidence: number; // 0-100
   citations: Citation[];
-  gap?: string;
 };
 
 export type ChatTurn = {
@@ -103,62 +101,8 @@ const INTERNAL_REMITTANCE: Citation = {
     "Outward remittances above USD 20,000 require additional AML screening and Deputy Compliance Officer sign-off before release.",
 };
 
-export const DEMO_ANSWERS: Record<string, AnswerData> = {
-  incident: {
-    summary:
-      "Your internal incident-response window is misaligned with CBSL. Internal policy allows 48 hours; CBSL requires 24 hours to the Director of Bank Supervision for material cyber incidents.",
-    bullets: [
-      "CBSL Technology Risk Management Direction §3.2 mandates a 24-hour notification to the Director of Bank Supervision for material cyber incidents.",
-      "Your IT Security Policy v4.2 §5.4 currently sets a 48-hour internal escalation to the CISO before regulator notification.",
-      "A 7-day root-cause report to CBSL is also required (§6.1) — this is not covered by the internal policy.",
-    ],
-    action:
-      "Amend IT Security Policy v4.2 §5.4 to require CISO notification within 4 hours and CBSL notification within 24 hours. Add a 7-day root-cause reporting template aligned to CBSL Direction §6.1.",
-    confidence: 92,
-    citations: [CBSL_TRMD, INTERNAL_INCIDENT],
-    gap: "Your internal policy allows 48h incident reporting but CBSL requires 24h — 1 section requires amendment.",
-  },
-  rpt: {
-    summary:
-      "For listed companies, SEC requires prior shareholder approval for related-party transactions above defined thresholds. Your board charter references the 5% asset threshold but omits the 10% equity trigger.",
-    bullets: [
-      "SEC §9(h) requires shareholder approval where a related-party transaction exceeds 10% of equity OR 5% of total assets — whichever is lower.",
-      "Full disclosure in the annual report is required for all RPTs above LKR 1 Mn (SEC §9(i)).",
-      "Independent director majority is required on the Related-Party Transactions Review Committee.",
-    ],
-    action:
-      "Update Board Charter Annex B to reflect the 'lower of 10% equity or 5% assets' rule. Add RPT quarterly disclosure workflow to Compliance Ops calendar.",
-    confidence: 88,
-    citations: [SEC_RPT, INTERNAL_INCIDENT],
-  },
-  wht: {
-    summary:
-      "Outward service fees to non-residents attract 14% withholding tax unless a DTAA applies. Your Remittance Ops Manual references the earlier 5% rate — this is out of date.",
-    bullets: [
-      "IRD Guideline on Withholding Tax (Amendment 2024) §3(a): 14% on service fees to non-residents.",
-      "DTAA relief available for 44 partner jurisdictions — evidence of tax residency certificate required.",
-      "Remittance Operations Manual v3.1 §4.2 still references pre-2024 rate assumptions.",
-    ],
-    action:
-      "Update Remittance Ops Manual §4.2 to reflect 14% WHT and DTAA evidence requirements. Retrain branch operations staff by end of Q2.",
-    confidence: 79,
-    citations: [IRD_WHT, INTERNAL_REMITTANCE],
-    gap: "Remittance manual references outdated 5% WHT — 14 branch SOPs affected.",
-  },
-  esg: {
-    summary:
-      "CSE has mandated IFRS S1/S2-aligned Sustainability Reports for listed entities from FY 2025. Your current CSR chapter is narrative-only and will not satisfy this requirement.",
-    bullets: [
-      "CSE Listing Rule §7.6(iv) requires an IFRS S1 & S2 Sustainability Report in the annual report from 1 January 2025.",
-      "Scope 1, 2 and material Scope 3 GHG disclosures are mandatory.",
-      "Board sustainability oversight statement is required.",
-    ],
-    action:
-      "Initiate ESG data-collection workstream. Engage assurance provider by Q3. Map current CSR content to IFRS S1/S2 disclosure taxonomy.",
-    confidence: 71,
-    citations: [CSE_ESG],
-  },
-};
+// Demo answers removed — chat now uses real AI (see src/lib/ai.functions.ts).
+
 
 export const DATA_SOURCES = {
   external: [
@@ -256,11 +200,5 @@ export const AI_RISKS = [
   { severity: "low" as const, title: "Vendor payment DTAA-evidence checkpoint absent", section: "Vendor Payments Policy", owner: "Finance Manager" },
 ];
 
-export function pickAnswerForQuery(q: string): AnswerData {
-  const s = q.toLowerCase();
-  if (s.includes("incident") || s.includes("cyber") || s.includes("cbsl")) return DEMO_ANSWERS.incident;
-  if (s.includes("related") || s.includes("rpt") || s.includes("sec")) return DEMO_ANSWERS.rpt;
-  if (s.includes("withhold") || s.includes("wht") || s.includes("ird") || s.includes("remit")) return DEMO_ANSWERS.wht;
-  if (s.includes("esg") || s.includes("sustainab") || s.includes("cse")) return DEMO_ANSWERS.esg;
-  return DEMO_ANSWERS.incident;
-}
+// pickAnswerForQuery removed — see answerCompliance in src/lib/ai.functions.ts.
+
