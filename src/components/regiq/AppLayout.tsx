@@ -280,7 +280,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
                       <p className="px-2 py-0.5 text-[11px] text-muted-foreground/60">Empty</p>
                     )}
                     {list.map((c) => (
-                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} />
+                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size="md" />
                     ))}
                   </div>
                 )}
@@ -345,7 +345,7 @@ function ChatHistoryNav({ activeChatId }: { activeChatId: string | null }) {
   );
 }
 
-function ChatItem({ chat, active, showProject }: { chat: ChatRow; active: boolean; showProject?: boolean }) {
+function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; active: boolean; showProject?: boolean; size?: "sm" | "md" }) {
   const { deleteChat, renameChat, projects } = useProjectsChats();
   const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
@@ -363,20 +363,24 @@ function ChatItem({ chat, active, showProject }: { chat: ChatRow; active: boolea
     setRenaming(false);
   };
 
+  const textSize = size === "md" ? "text-sm" : "text-xs";
+  const iconSize = size === "md" ? "h-4 w-4" : "h-3 w-3";
+
   return (
     <div
       className={cn(
-        "group flex items-center gap-1 rounded-md px-2 py-1 text-xs cursor-pointer",
+        "group flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer",
+        textSize,
         active
           ? "bg-gradient-brand-soft text-[color:var(--brand-indigo)] font-medium"
           : "text-foreground/70 hover:bg-muted",
       )}
       onClick={() => !renaming && navigate({ to: "/app/chat", search: { chatId: chat.id } })}
     >
-      <MessageSquare className="h-3 w-3 shrink-0" />
+      <MessageSquare className={cn("shrink-0", iconSize)} />
       {renaming ? (
         <input
-          className="flex-1 rounded border bg-background px-1 text-xs outline-none"
+          className={cn("flex-1 rounded border bg-background px-1 outline-none", textSize)}
           value={value}
           autoFocus
           onClick={(e) => e.stopPropagation()}
@@ -400,7 +404,7 @@ function ChatItem({ chat, active, showProject }: { chat: ChatRow; active: boolea
             onClick={(e) => { e.stopPropagation(); setRenaming(true); }}
             title="Rename"
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className={iconSize} />
           </button>
           <button
             className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-destructive"
@@ -414,7 +418,7 @@ function ChatItem({ chat, active, showProject }: { chat: ChatRow; active: boolea
             }}
             title="Delete chat"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className={iconSize} />
           </button>
         </>
       )}
