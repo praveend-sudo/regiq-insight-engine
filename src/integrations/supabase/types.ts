@@ -49,6 +49,41 @@ export type Database = {
           },
         ]
       }
+      chat_shares: {
+        Row: {
+          chat_id: string
+          created_at: string
+          id: string
+          permission: string
+          shared_by: string
+          shared_with: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          id?: string
+          permission?: string
+          shared_by: string
+          shared_with: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          id?: string
+          permission?: string
+          shared_by?: string
+          shared_with?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_shares_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string
@@ -296,7 +331,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_chat: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
       find_user_id_by_email: { Args: { _email: string }; Returns: string }
+      has_chat_access: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
