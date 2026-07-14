@@ -12,10 +12,8 @@ export type Citation = {
 export type AnswerData = {
   summary: string;
   bullets: string[];
-  action: string;
   confidence: number; // 0-100
   citations: Citation[];
-  gap?: string;
 };
 
 export type ChatTurn = {
