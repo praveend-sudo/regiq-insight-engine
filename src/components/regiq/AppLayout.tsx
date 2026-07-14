@@ -24,7 +24,6 @@ import {
   MessageSquarePlus,
   Type,
   Minus,
-  Plus as PlusIcon,
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
