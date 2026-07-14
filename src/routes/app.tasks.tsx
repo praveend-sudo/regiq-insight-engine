@@ -34,8 +34,9 @@ import {
 } from "@/lib/tasks.functions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckSquare, Flag, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { CheckSquare, Flag, Mail, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
 
 export const Route = createFileRoute("/app/tasks")({
   component: TasksPage,
