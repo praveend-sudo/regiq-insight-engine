@@ -394,7 +394,7 @@ function ChatHistoryNav({ activeChatId }: { activeChatId: string | null }) {
   );
 }
 
-function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; active: boolean; showProject?: boolean; size?: "sm" | "md" }) {
+function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; active: boolean; showProject?: boolean; size?: ChatSize }) {
   const { deleteChat, renameChat, projects } = useProjectsChats();
   const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
@@ -412,8 +412,9 @@ function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; a
     setRenaming(false);
   };
 
-  const textSize = size === "md" ? "text-sm" : "text-xs";
-  const iconSize = size === "md" ? "h-4 w-4" : "h-3 w-3";
+  const textSize = size === "lg" ? "text-base" : size === "md" ? "text-sm" : "text-xs";
+  const iconSize = size === "lg" ? "h-5 w-5" : size === "md" ? "h-4 w-4" : "h-3 w-3";
+  const itemPadding = size === "lg" ? "px-2 py-1.5" : "px-2 py-1";
 
   return (
     <div
