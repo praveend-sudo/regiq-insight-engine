@@ -31,6 +31,9 @@ function ChatPage() {
   const [refsOpen, setRefsOpen] = useState(true);
   const [highlightedRef, setHighlightedRef] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [emailContent, setEmailContent] = useState<{ subject: string; body: string; title: string }>(
+    { subject: "", body: "", title: "Email compliance summary" },
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const askAi = useServerFn(answerCompliance);
   const fnCreateTask = useServerFn(createTask);
@@ -42,6 +45,45 @@ function ChatPage() {
     () => (turns.length ? turns[turns.length - 1].answer.citations : []),
     [turns],
   );
+
+  const formatTurn = (t: ChatTurn) => {
+    return [
+      `Q: ${t.question}`,
+      ``,
+      `A: ${t.answer.summary}`,
+      ``,
+      ...t.answer.bullets.map((b) => `• ${b}`),
+      ``,
+      `Confidence: ${t.answer.confidence}%`,
+      ``,
+      `Sources:`,
+      ...t.answer.citations.map(
+        (c) => `- [${c.type === "external" ? "EXT" : "INT"}] ${c.issuer} · ${c.title} — ${c.section}`,
+      ),
+    ].join("\n");
+  };
+
+  const openEmailForTurn = (t: ChatTurn) => {
+    setEmailContent({
+      title: "Email this answer",
+      subject: `RegIQ Answer: ${t.question.slice(0, 80)}`,
+      body: formatTurn(t),
+    });
+    setEmailOpen(true);
+  };
+
+  const openEmailForChat = () => {
+    if (turns.length === 0) {
+      toast.error("Ask a question first");
+      return;
+    }
+    setEmailContent({
+      title: "Email full chat",
+      subject: `RegIQ Chat Summary (${turns.length} question${turns.length === 1 ? "" : "s"})`,
+      body: turns.map(formatTurn).join("\n\n----------\n\n"),
+    });
+    setEmailOpen(true);
+  };
 
   const ask = async (q: string) => {
     if (!q.trim() || thinking) return;
