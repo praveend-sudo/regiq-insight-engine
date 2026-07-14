@@ -9,6 +9,7 @@ import {
   Search,
   Mail,
   Download,
+  Share2,
   Plus,
   PanelRightOpen,
   PanelRightClose,
@@ -65,6 +66,7 @@ export function AppLayout(props: {
   onEmailSummary?: () => void;
   onDownloadPdf?: () => void;
   onNewChat?: () => void;
+  onShareChat?: () => void;
   onToggleRefs?: () => void;
   refsOpen?: boolean;
   unreadCount?: number;
@@ -81,6 +83,7 @@ function AppLayoutInner({
   onEmailSummary,
   onDownloadPdf,
   onNewChat,
+  onShareChat,
   onToggleRefs,
   refsOpen,
   unreadCount = 0,
@@ -89,10 +92,12 @@ function AppLayoutInner({
   onEmailSummary?: () => void;
   onDownloadPdf?: () => void;
   onNewChat?: () => void;
+  onShareChat?: () => void;
   onToggleRefs?: () => void;
   refsOpen?: boolean;
   unreadCount?: number;
 }) {
+
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const search = useRouterState({ select: (r) => r.location.search }) as { chatId?: string };
   const activeChatId = search?.chatId ?? null;
@@ -184,6 +189,12 @@ function AppLayoutInner({
                 <Download className="h-4 w-4" /> PDF
               </Button>
             )}
+            {onShareChat && (
+              <Button variant="ghost" size="sm" onClick={onShareChat} className="gap-1.5">
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
+            )}
+
             {onToggleRefs && (
               <Button variant="outline" size="sm" onClick={onToggleRefs} className="gap-1.5">
                 {refsOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}

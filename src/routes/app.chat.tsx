@@ -8,6 +8,8 @@ import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
+import { ShareChatDialog } from "@/components/regiq/ShareChatDialog";
+
 import {
   SUGGESTED_QUESTIONS,
   type AnswerData,
@@ -47,6 +49,8 @@ function ChatPage() {
   const [refsOpen, setRefsOpen] = useState(true);
   const [highlightedRef, setHighlightedRef] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
   const [emailContent, setEmailContent] = useState<{ subject: string; body: string; title: string }>(
     { subject: "", body: "", title: "Email compliance summary" },
   );
@@ -196,9 +200,11 @@ function ChatPage() {
       onEmailSummary={openEmailForChat}
       onDownloadPdf={onDownloadPdf}
       onNewChat={startNewChat}
+      onShareChat={chatId ? () => setShareOpen(true) : undefined}
       onToggleRefs={() => setRefsOpen((v) => !v)}
       refsOpen={refsOpen}
     >
+
       <div className="flex min-w-0 flex-1 flex-col">
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
           {turns.length === 0 ? (
@@ -312,7 +318,9 @@ function ChatPage() {
         defaultSubject={emailContent.subject}
         defaultBody={emailContent.body}
       />
+      <ShareChatDialog chatId={chatId ?? null} open={shareOpen} onOpenChange={setShareOpen} />
     </AppLayout>
+
   );
 }
 
