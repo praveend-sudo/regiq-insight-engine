@@ -343,6 +343,8 @@ function TaskCard({
   onRemarks,
   onDelete,
   onAssign,
+  onEdit,
+  onEmail,
 }: {
   task: TaskRow;
   isOwner: boolean;
@@ -350,6 +352,8 @@ function TaskCard({
   onRemarks: (r: string) => void;
   onDelete: () => void;
   onAssign: () => void;
+  onEdit: () => void;
+  onEmail: () => void;
 }) {
   const [remarks, setRemarks] = useState(task.remarks ?? "");
   const [dirty, setDirty] = useState(false);
@@ -371,7 +375,7 @@ function TaskCard({
             </span>
           </div>
           {task.description && (
-            <p className="mt-1 text-sm text-foreground/80">{task.description}</p>
+            <p className="mt-1 text-sm text-foreground/80 whitespace-pre-wrap">{task.description}</p>
           )}
           {task.source_question && (
             <div className="mt-2 rounded-lg border-l-2 border-[color:var(--brand-violet)] bg-gradient-brand-soft/40 p-2 text-xs text-muted-foreground">
@@ -406,6 +410,14 @@ function TaskCard({
               <SelectItem value="done">Done</SelectItem>
             </SelectContent>
           </Select>
+          {isOwner && (
+            <Button variant="ghost" size="icon" onClick={onEdit} title="Edit">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={onEmail} title="Email task">
+            <Mail className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={onAssign} title="Assign">
             <UserPlus className="h-4 w-4" />
           </Button>
