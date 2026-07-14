@@ -106,8 +106,45 @@ function ChatPage() {
                   answer={t.answer}
                   onEmail={() => setEmailOpen(true)}
                   onCitationClick={onCitationClick}
+                  onFlag={async () => {
+                    try {
+                      await fnCreateFlag({
+                        data: {
+                          question: t.question,
+                          summary: t.answer.summary,
+                          bullets: t.answer.bullets,
+                          citations: t.answer.citations.map((c) => ({
+                            id: c.id, type: c.type, issuer: c.issuer, title: c.title,
+                            section: c.section, date: c.date, relevance: c.relevance, excerpt: c.excerpt,
+                          })),
+                          confidence: t.answer.confidence,
+                        },
+                      });
+                      toast.success("Flagged — view in Tasks & Flags");
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Flag failed");
+                    }
+                  }}
+                  onCreateTask={async () => {
+                    try {
+                      await fnCreateTask({
+                        data: {
+                          title: `Follow-up: ${t.question.slice(0, 100)}`,
+                          description: t.answer.bullets.map((b) => `• ${b}`).join("\n"),
+                          source_question: t.question,
+                          source_answer: t.answer.summary,
+                        },
+                      });
+                      toast.success("Task created", {
+                        action: { label: "View tasks", onClick: () => navigate({ to: "/app/tasks" }) },
+                      });
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Task create failed");
+                    }
+                  }}
                 />
               ))}
+
               {thinking && <TypingIndicator />}
             </div>
           )}
