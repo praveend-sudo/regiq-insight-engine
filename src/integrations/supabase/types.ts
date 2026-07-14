@@ -340,6 +340,14 @@ export type Database = {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
       }
+      is_chat_owner: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_chat_shared_with: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -139,7 +139,8 @@ export const assignTask = createServerFn({ method: "POST" })
     const { supabase } = context;
     let assignedTo: string | null = null;
     if (data.email) {
-      const { data: found, error: rpcErr } = await supabase.rpc(
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: found, error: rpcErr } = await supabaseAdmin.rpc(
         "find_user_id_by_email",
         { _email: data.email },
       );
