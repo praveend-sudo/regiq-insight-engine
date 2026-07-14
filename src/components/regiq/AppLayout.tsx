@@ -188,6 +188,12 @@ function AppLayoutInner({
                 <Download className="h-4 w-4" /> PDF
               </Button>
             )}
+            {onShareChat && (
+              <Button variant="ghost" size="sm" onClick={onShareChat} className="gap-1.5">
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
+            )}
+
             {onToggleRefs && (
               <Button variant="outline" size="sm" onClick={onToggleRefs} className="gap-1.5">
                 {refsOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
