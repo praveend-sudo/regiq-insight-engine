@@ -316,7 +316,9 @@ function ChatPage() {
         defaultSubject={emailContent.subject}
         defaultBody={emailContent.body}
       />
+      <ShareChatDialog chatId={chatId ?? null} open={shareOpen} onOpenChange={setShareOpen} />
     </AppLayout>
+
   );
 }
 
