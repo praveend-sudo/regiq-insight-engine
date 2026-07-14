@@ -22,8 +22,10 @@ import {
   Trash2,
   Pencil,
   MessageSquarePlus,
+  Type,
+  Minus,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -210,6 +212,9 @@ function AppLayoutInner({
 }
 
 // ---------------- Projects nav (under Ask Compliance) ----------------
+type Density = "compact" | "default" | "comfortable";
+type ChatSize = "sm" | "md" | "lg";
+
 function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   const { projects, chats, createProject, deleteProject } = useProjectsChats();
   const navigate = useNavigate();
@@ -217,6 +222,20 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [density, setDensity] = useState<Density>("default");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("regiq-sidebar-density") as Density | null;
+    if (saved && ["compact", "default", "comfortable"].includes(saved)) {
+      setDensity(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("regiq-sidebar-density", density);
+  }, [density]);
+
+  const chatSize: ChatSize = density === "compact" ? "sm" : density === "comfortable" ? "lg" : "md";
 
   const chatsIn = (pid: string) => chats.filter((c) => c.project_id === pid);
 
@@ -229,7 +248,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   };
 
   return (
-    <div className="ml-2 mt-1">
+      <div className="ml-2 mt-1">
       <div className="flex items-center gap-1 px-1.5">
         <button
           className="flex flex-1 items-center gap-1 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
@@ -238,6 +257,24 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
           {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <span>Projects</span>
         </button>
+        <div className="flex items-center rounded-md border bg-muted/40 p-0.5" title="Chat title density">
+          {(["compact", "default", "comfortable"] as Density[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDensity(d)}
+              className={cn(
+                "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                density === d
+                  ? "bg-background text-[color:var(--brand-indigo)] shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {d === "compact" && <Minus className="h-3 w-3" />}
+              {d === "default" && <Type className="h-3 w-3" />}
+              {d === "comfortable" && <Plus className="h-3 w-3" />}
+            </button>
+          ))}
+        </div>
         <button
           className="p-0.5 text-muted-foreground hover:text-[color:var(--brand-indigo)]"
           onClick={() => setDialogOpen(true)}
@@ -291,7 +328,7 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
                       <p className="px-2 py-0.5 text-[11px] text-muted-foreground/60">Empty</p>
                     )}
                     {list.map((c) => (
-                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size="md" />
+                      <ChatItem key={c.id} chat={c} active={activeChatId === c.id} size={chatSize} />
                     ))}
                   </div>
                 )}
@@ -356,7 +393,7 @@ function ChatHistoryNav({ activeChatId }: { activeChatId: string | null }) {
   );
 }
 
-function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; active: boolean; showProject?: boolean; size?: "sm" | "md" }) {
+function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; active: boolean; showProject?: boolean; size?: ChatSize }) {
   const { deleteChat, renameChat, projects } = useProjectsChats();
   const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
@@ -374,13 +411,15 @@ function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; a
     setRenaming(false);
   };
 
-  const textSize = size === "md" ? "text-sm" : "text-xs";
-  const iconSize = size === "md" ? "h-4 w-4" : "h-3 w-3";
+  const textSize = size === "lg" ? "text-base" : size === "md" ? "text-sm" : "text-xs";
+  const iconSize = size === "lg" ? "h-5 w-5" : size === "md" ? "h-4 w-4" : "h-3 w-3";
+  const itemPadding = size === "lg" ? "px-2 py-1.5" : "px-2 py-1";
 
   return (
     <div
       className={cn(
-        "group flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer",
+        "group flex items-center gap-1 rounded-md cursor-pointer",
+        itemPadding,
         textSize,
         active
           ? "bg-gradient-brand-soft text-[color:var(--brand-indigo)] font-medium"
