@@ -129,7 +129,7 @@ function ChatPage() {
 
   return (
     <AppLayout
-      onEmailSummary={() => turns.length ? setEmailOpen(true) : toast.error("Ask a question first")}
+      onEmailSummary={openEmailForChat}
       onDownloadPdf={onDownloadPdf}
       onNewChat={() => { setTurns([]); toast("New conversation started"); }}
       onToggleRefs={() => setRefsOpen((v) => !v)}
