@@ -73,6 +73,42 @@ export type Database = {
         }
         Relationships: []
       }
+      flagged_answers: {
+        Row: {
+          bullets: Json
+          citations: Json
+          confidence: number | null
+          created_at: string
+          id: string
+          note: string | null
+          question: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          bullets?: Json
+          citations?: Json
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          question: string
+          summary: string
+          user_id: string
+        }
+        Update: {
+          bullets?: Json
+          citations?: Json
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          question?: string
+          summary?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           ai_insight: string | null
@@ -139,6 +175,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          id: string
+          remarks: string | null
+          source_answer: string | null
+          source_question: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          remarks?: string | null
+          source_answer?: string | null
+          source_question?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          remarks?: string | null
+          source_answer?: string | null
+          source_question?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       uploaded_documents: {
         Row: {
           created_at: string
@@ -180,7 +258,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_user_id_by_email: { Args: { _email: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
