@@ -244,8 +244,9 @@ function ChatPage() {
       <EmailSummaryDialog
         open={emailOpen}
         onOpenChange={setEmailOpen}
-        defaultSubject={turns.length ? `RegIQ Answer: ${turns[turns.length - 1].question.slice(0, 60)}` : "RegIQ Answer"}
-        defaultBody={turns.length ? turns[turns.length - 1].answer.summary : ""}
+        title={emailContent.title}
+        defaultSubject={emailContent.subject}
+        defaultBody={emailContent.body}
       />
     </AppLayout>
   );
