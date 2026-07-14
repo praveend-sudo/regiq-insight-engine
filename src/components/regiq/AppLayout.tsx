@@ -22,8 +22,11 @@ import {
   Trash2,
   Pencil,
   MessageSquarePlus,
+  Type,
+  Minus,
+  Plus as PlusIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
