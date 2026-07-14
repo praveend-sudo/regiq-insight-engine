@@ -6,7 +6,7 @@ import { SEED_NOTIFICATIONS } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { IssuerBadge } from "@/components/regiq/ReferencesPanel";
-import { Mail, ScanSearch, MessageSquareText, Bell } from "lucide-react";
+import { Mail, MessageSquareText, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/notifications")({
