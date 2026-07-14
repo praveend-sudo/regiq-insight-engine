@@ -213,6 +213,9 @@ function AppLayoutInner({
 }
 
 // ---------------- Projects nav (under Ask Compliance) ----------------
+type Density = "compact" | "default" | "comfortable";
+type ChatSize = "sm" | "md" | "lg";
+
 function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   const { projects, chats, createProject, deleteProject } = useProjectsChats();
   const navigate = useNavigate();
@@ -220,6 +223,20 @@ function ProjectsNav({ activeChatId }: { activeChatId: string | null }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [density, setDensity] = useState<Density>("default");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("regiq-sidebar-density") as Density | null;
+    if (saved && ["compact", "default", "comfortable"].includes(saved)) {
+      setDensity(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("regiq-sidebar-density", density);
+  }, [density]);
+
+  const chatSize: ChatSize = density === "compact" ? "sm" : density === "comfortable" ? "lg" : "md";
 
   const chatsIn = (pid: string) => chats.filter((c) => c.project_id === pid);
 
