@@ -406,9 +406,13 @@ function ChatItem({ chat, active, showProject }: { chat: ChatRow; active: boolea
             className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
-              if (confirm(`Delete "${chat.title}"?`)) void deleteChat(chat.id);
+              if (confirm(`Delete "${chat.title}"? This removes all messages in it.`)) {
+                void deleteChat(chat.id).then(() => {
+                  if (active) navigate({ to: "/app/chat", search: {} });
+                });
+              }
             }}
-            title="Delete"
+            title="Delete chat"
           >
             <Trash2 className="h-3 w-3" />
           </button>
