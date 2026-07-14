@@ -200,11 +200,5 @@ export const AI_RISKS = [
   { severity: "low" as const, title: "Vendor payment DTAA-evidence checkpoint absent", section: "Vendor Payments Policy", owner: "Finance Manager" },
 ];
 
-export function pickAnswerForQuery(q: string): AnswerData {
-  const s = q.toLowerCase();
-  if (s.includes("incident") || s.includes("cyber") || s.includes("cbsl")) return DEMO_ANSWERS.incident;
-  if (s.includes("related") || s.includes("rpt") || s.includes("sec")) return DEMO_ANSWERS.rpt;
-  if (s.includes("withhold") || s.includes("wht") || s.includes("ird") || s.includes("remit")) return DEMO_ANSWERS.wht;
-  if (s.includes("esg") || s.includes("sustainab") || s.includes("cse")) return DEMO_ANSWERS.esg;
-  return DEMO_ANSWERS.incident;
-}
+// pickAnswerForQuery removed — see answerCompliance in src/lib/ai.functions.ts.
+
