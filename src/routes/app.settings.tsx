@@ -81,7 +81,7 @@ function SettingsPage() {
         </Card>
 
         <Card icon={<Building className="h-4 w-4" />} title="Audit trail">
-          <p className="text-sm text-muted-foreground">Every question, answer, confidence score, and citation is logged for regulator inspection. Export the full log from the compliance ops panel.</p>
+          <p className="text-sm text-muted-foreground">Every question, answer, and citation is logged for regulator inspection. Export the full log from the compliance ops panel.</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => toast("Audit export queued")}>Export audit log (CSV)</Button>
         </Card>
 
