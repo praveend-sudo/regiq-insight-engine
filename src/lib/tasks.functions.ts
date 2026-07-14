@@ -158,17 +158,39 @@ export const assignTask = createServerFn({ method: "POST" })
   });
 
 // FLAGGED ANSWERS
+export type FlaggedCitation = {
+  id: string;
+  type: string;
+  issuer: string;
+  title: string;
+  section: string;
+  date: string;
+  relevance: number;
+  excerpt: string;
+};
+
 export type FlaggedRow = {
   id: string;
   user_id: string;
   question: string;
   summary: string;
   bullets: string[];
-  citations: unknown[];
+  citations: FlaggedCitation[];
   confidence: number | null;
   note: string | null;
   created_at: string;
 };
+
+const flaggedCitationSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  issuer: z.string(),
+  title: z.string(),
+  section: z.string(),
+  date: z.string(),
+  relevance: z.number(),
+  excerpt: z.string(),
+});
 
 export const listFlagged = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -178,7 +200,7 @@ export const listFlagged = createServerFn({ method: "GET" })
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as FlaggedRow[];
+    return (data ?? []) as unknown as FlaggedRow[];
   });
 
 export const createFlagged = createServerFn({ method: "POST" })
@@ -187,7 +209,7 @@ export const createFlagged = createServerFn({ method: "POST" })
     question: string;
     summary: string;
     bullets: string[];
-    citations: unknown[];
+    citations: FlaggedCitation[];
     confidence?: number;
     note?: string;
   }) =>
@@ -196,7 +218,7 @@ export const createFlagged = createServerFn({ method: "POST" })
         question: z.string().min(1).max(2000),
         summary: z.string().min(1).max(6000),
         bullets: z.array(z.string()).max(30),
-        citations: z.array(z.unknown()).max(30),
+        citations: z.array(flaggedCitationSchema).max(30),
         confidence: z.number().min(0).max(100).optional(),
         note: z.string().max(2000).optional(),
       })
@@ -209,7 +231,7 @@ export const createFlagged = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return row as FlaggedRow;
+    return row as unknown as FlaggedRow;
   });
 
 export const deleteFlagged = createServerFn({ method: "POST" })
@@ -223,3 +245,4 @@ export const deleteFlagged = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
