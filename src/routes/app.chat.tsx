@@ -18,7 +18,7 @@ import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
-import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/app/chat")({
   component: ChatPage,
