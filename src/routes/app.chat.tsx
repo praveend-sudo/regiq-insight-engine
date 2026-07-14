@@ -106,7 +106,6 @@ function ChatPage() {
       `Q: ${t.question}`, ``,
       `A: ${t.answer.summary}`, ``,
       ...t.answer.bullets.map((b) => `• ${b}`), ``,
-      `Confidence: ${t.answer.confidence}%`, ``,
       `Sources:`,
       ...t.answer.citations.map(
         (c) => `- [${c.type === "external" ? "EXT" : "INT"}] ${c.issuer} · ${c.title} — ${c.section}`,
