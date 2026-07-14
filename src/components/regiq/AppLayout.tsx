@@ -419,7 +419,8 @@ function ChatItem({ chat, active, showProject, size = "sm" }: { chat: ChatRow; a
   return (
     <div
       className={cn(
-        "group flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer",
+        "group flex items-center gap-1 rounded-md cursor-pointer",
+        itemPadding,
         textSize,
         active
           ? "bg-gradient-brand-soft text-[color:var(--brand-indigo)] font-medium"
