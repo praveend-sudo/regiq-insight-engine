@@ -8,6 +8,8 @@ import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
+import { ShareChatDialog } from "@/components/regiq/ShareChatDialog";
+
 import {
   SUGGESTED_QUESTIONS,
   type AnswerData,
