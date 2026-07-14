@@ -18,11 +18,15 @@ export function AnswerCard({
   answer,
   onEmail,
   onCitationClick,
+  onFlag,
+  onCreateTask,
 }: {
   question: string;
   answer: AnswerData;
   onEmail: () => void;
   onCitationClick: (c: Citation) => void;
+  onFlag?: () => void;
+  onCreateTask?: () => void;
 }) {
   const copy = () => {
     void navigator.clipboard.writeText(
@@ -30,6 +34,7 @@ export function AnswerCard({
     );
     toast.success("Answer copied to clipboard");
   };
+
 
   return (
     <div className="space-y-4">
