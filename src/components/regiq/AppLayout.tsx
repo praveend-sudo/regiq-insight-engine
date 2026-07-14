@@ -65,6 +65,7 @@ export function AppLayout(props: {
   onEmailSummary?: () => void;
   onDownloadPdf?: () => void;
   onNewChat?: () => void;
+  onShareChat?: () => void;
   onToggleRefs?: () => void;
   refsOpen?: boolean;
   unreadCount?: number;
@@ -81,6 +82,7 @@ function AppLayoutInner({
   onEmailSummary,
   onDownloadPdf,
   onNewChat,
+  onShareChat,
   onToggleRefs,
   refsOpen,
   unreadCount = 0,
@@ -89,10 +91,12 @@ function AppLayoutInner({
   onEmailSummary?: () => void;
   onDownloadPdf?: () => void;
   onNewChat?: () => void;
+  onShareChat?: () => void;
   onToggleRefs?: () => void;
   refsOpen?: boolean;
   unreadCount?: number;
 }) {
+
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const search = useRouterState({ select: (r) => r.location.search }) as { chatId?: string };
   const activeChatId = search?.chatId ?? null;
