@@ -22,7 +22,7 @@ export type AiAnswer = {
 
 // Compact corpus the model can cite from. Mirrors mock-data.ts sources but
 // lives here so the server function is self-contained.
-const CORPUS: AiCitation[] = [
+export const CORPUS: AiCitation[] = [
   {
     id: "cbsl-trmd-2021",
     type: "external",
@@ -135,7 +135,7 @@ const CORPUS: AiCitation[] = [
   },
 ];
 
-const SYSTEM_PROMPT = `You are RegIQ, an AI compliance assistant for financial institutions in Sri Lanka. You answer compliance questions grounded ONLY in the provided regulatory corpus (CBSL, SEC, CSE, IRD) and internal policy excerpts.
+export const SYSTEM_PROMPT = `You are RegIQ, an AI compliance assistant for financial institutions in Sri Lanka. You answer compliance questions grounded ONLY in the provided regulatory corpus (CBSL, SEC, CSE, IRD) and internal policy excerpts.
 
 You MUST respond with a single JSON object matching exactly this shape:
 {
