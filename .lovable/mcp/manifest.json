@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "sdk_version": "0.25.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ulvkpbtzashhyiwahigr.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "regiq-mcp",
+      "version": "0.1.0",
+      "title": "RegIQ Compliance"
+    },
+    "tools": [
+      {
+        "name": "ask_regiq",
+        "title": "Ask RegIQ a compliance question",
+        "description": "Answer a Sri Lankan financial compliance question grounded in CBSL, SEC, CSE and IRD regulations plus internal policy excerpts. Returns a summary, key points and the sources used.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The compliance question to answer."
+            }
+          },
+          "required": [
+            "question"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_chats",
+        "title": "List RegIQ chats",
+        "description": "List the signed-in user's RegIQ compliance chats, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Maximum number of chats to return."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_chat",
+        "title": "Read a RegIQ chat",
+        "description": "Read the full question-and-answer history of one RegIQ chat the user can access.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "chat_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The chat id, as returned by list_chats."
+            }
+          },
+          "required": [
+            "chat_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_tasks",
+        "title": "List compliance tasks",
+        "description": "List compliance tasks the signed-in user created or is assigned to, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "open",
+                "in_progress",
+                "done",
+                "all"
+              ],
+              "description": "Filter by task status, or 'all'."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_task",
+        "title": "Create a compliance task",
+        "description": "Create a new compliance follow-up task owned by the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "description": "Short task title."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 4000,
+              "description": "Optional task detail."
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_task",
+        "title": "Update a compliance task",
+        "description": "Update the status and/or remarks of an existing compliance task.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The task id."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "in_progress",
+                "done"
+              ],
+              "description": "New task status."
+            },
+            "remarks": {
+              "type": "string",
+              "maxLength": 4000,
+              "description": "Remarks to record on the task."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_flagged_answers",
+        "title": "List flagged answers",
+        "description": "List RegIQ answers the signed-in user flagged for compliance review.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Maximum number of flagged answers."
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

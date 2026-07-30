@@ -11,22 +11,43 @@ import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
+// Only allow same-origin relative paths as a post-login destination.
+function safeNext(next?: string) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const target = safeNext(next);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const goAfterAuth = () => {
+    if (target) {
+      window.location.href = target;
+      return;
+    }
+    navigate({ to: "/app/chat" });
+  };
+
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app/chat" });
+      if (!data.session) return;
+      if (target) window.location.href = target;
+      else navigate({ to: "/app/chat" });
     });
-  }, [navigate]);
+  }, [navigate, target]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +58,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}${target ?? ""}`,
             data: { full_name: fullName || email },
           },
         });
@@ -47,7 +68,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/app/chat" });
+      goAfterAuth();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -58,7 +79,7 @@ function AuthPage() {
   const google = async () => {
     setLoading(true);
     const res = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${target ?? ""}`,
     });
     if (res.error) {
       toast.error(res.error.message ?? "Google sign in failed");
@@ -66,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (!res.redirected) {
-      navigate({ to: "/app/chat" });
+      goAfterAuth();
     }
   };
 
