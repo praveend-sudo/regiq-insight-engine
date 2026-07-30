@@ -34,7 +34,8 @@ import {
 } from "@/lib/tasks.functions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckSquare, Flag, Mail, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { CalendarDays, CheckSquare, Flag, Mail, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { EVENT_STYLE, toISODate } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
 
@@ -125,9 +126,11 @@ function TasksPage() {
     }
   };
 
-  const onCreate = async (title: string, description: string) => {
+  const onCreate = async (title: string, description: string, dueDate: string) => {
     try {
-      const row = await fnCreate({ data: { title, description: description || undefined } });
+      const row = await fnCreate({
+        data: { title, description: description || undefined, due_date: dueDate || null },
+      });
       setTasks((p) => [row as TaskRow, ...p]);
       setShowNew(false);
       toast.success("Task created");
@@ -136,9 +139,11 @@ function TasksPage() {
     }
   };
 
-  const onEditSave = async (id: string, title: string, description: string) => {
+  const onEditSave = async (id: string, title: string, description: string, dueDate: string) => {
     try {
-      const updated = await fnUpdate({ data: { id, title, description: description || null } });
+      const updated = await fnUpdate({
+        data: { id, title, description: description || null, due_date: dueDate || null },
+      });
       setTasks((p) => p.map((t) => (t.id === id ? { ...t, ...(updated as TaskRow) } : t)));
       setEditTask(null);
       toast.success("Task updated");
@@ -146,6 +151,7 @@ function TasksPage() {
       toast.error(e instanceof Error ? e.message : "Update failed");
     }
   };
+
 
   const onAssign = async (row: TaskRow, email: string | null) => {
     try {
@@ -384,6 +390,8 @@ function TaskCard({
   const [remarks, setRemarks] = useState(task.remarks ?? "");
   const [dirty, setDirty] = useState(false);
   const meta = STATUS_META[task.status];
+  const kind = isOwner && task.assigned_to ? "assigned_by_me" : "assigned_to_me";
+  const overdue = !!task.due_date && task.status !== "done" && task.due_date < toISODate(new Date());
 
   return (
     <motion.div
@@ -423,7 +431,24 @@ function TaskCard({
                 {task.assignee_name ?? (task.assigned_to ? "someone" : "unassigned")}
               </button>
             </span>
+            {task.due_date && (
+              <>
+                <span>·</span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold",
+                    EVENT_STYLE[kind].chip,
+                    overdue ? "text-[color:var(--risk)]" : EVENT_STYLE[kind].text,
+                  )}
+                >
+                  <CalendarDays className="h-3 w-3" />
+                  {overdue ? "Overdue " : "Target "}
+                  {new Date(`${task.due_date}T00:00:00`).toLocaleDateString()}
+                </span>
+              </>
+            )}
           </div>
+
         </div>
         <div className="flex items-center gap-1.5">
           <Select value={task.status} onValueChange={(v) => onStatus(v as TaskRow["status"])}>
@@ -487,11 +512,12 @@ function NewTaskDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onSubmit: (title: string, description: string) => void;
+  onSubmit: (title: string, description: string, dueDate: string) => void;
 }) {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
-  useEffect(() => { if (!open) { setTitle(""); setDesc(""); } }, [open]);
+  const [due, setDue] = useState("");
+  useEffect(() => { if (!open) { setTitle(""); setDesc(""); setDue(""); } }, [open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -508,11 +534,15 @@ function NewTaskDialog({
             <label className="text-sm font-medium">Description</label>
             <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Optional details" />
           </div>
+          <div>
+            <label className="text-sm font-medium">Target completion date</label>
+            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
-            onClick={() => title.trim() && onSubmit(title.trim(), desc.trim())}
+            onClick={() => title.trim() && onSubmit(title.trim(), desc.trim(), due)}
             disabled={!title.trim()}
             className="bg-gradient-brand text-white"
           >
@@ -523,6 +553,7 @@ function NewTaskDialog({
     </Dialog>
   );
 }
+
 
 function AssignDialog({
   task,
@@ -585,14 +616,16 @@ function EditTaskDialog({
 }: {
   task: TaskRow | null;
   onClose: () => void;
-  onSave: (id: string, title: string, description: string) => void;
+  onSave: (id: string, title: string, description: string, dueDate: string) => void;
 }) {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+  const [due, setDue] = useState("");
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDesc(task.description ?? "");
+      setDue(task.due_date ?? "");
     }
   }, [task]);
   return (
@@ -600,7 +633,7 @@ function EditTaskDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit task</DialogTitle>
-          <DialogDescription>Update the title or description.</DialogDescription>
+          <DialogDescription>Update the title, description or target date.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
@@ -611,14 +644,19 @@ function EditTaskDialog({
             <label className="text-sm font-medium">Description</label>
             <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
           </div>
+          <div>
+            <label className="text-sm font-medium">Target completion date</label>
+            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button
             className="bg-gradient-brand text-white"
             disabled={!title.trim()}
-            onClick={() => task && onSave(task.id, title.trim(), desc.trim())}
+            onClick={() => task && onSave(task.id, title.trim(), desc.trim(), due)}
           >
+
             Save
           </Button>
         </DialogFooter>

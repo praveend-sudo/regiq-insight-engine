@@ -119,6 +119,63 @@ export type Database = {
           },
         ]
       }
+      compliance_obligations: {
+        Row: {
+          active: boolean
+          audience: string
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          issuer: string | null
+          last_completed_at: string | null
+          lead_days: number
+          next_due_date: string
+          recipients: string[]
+          reminded_for: string | null
+          source_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          issuer?: string | null
+          last_completed_at?: string | null
+          lead_days?: number
+          next_due_date: string
+          recipients?: string[]
+          reminded_for?: string | null
+          source_type?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          issuer?: string | null
+          last_completed_at?: string | null
+          lead_days?: number
+          next_due_date?: string
+          recipients?: string[]
+          reminded_for?: string | null
+          source_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flagged_answers: {
         Row: {
           bullets: Json
@@ -151,6 +208,48 @@ export type Database = {
           note?: string | null
           question?: string
           summary?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      memos: {
+        Row: {
+          body: string
+          change_summary: string | null
+          created_at: string
+          id: string
+          issuer: string | null
+          recipient_email: string | null
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          issuer?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          issuer?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -253,8 +352,10 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           description: string | null
+          due_date: string | null
           id: string
           remarks: string | null
+          reminded_at: string | null
           source_answer: string | null
           source_question: string | null
           status: string
@@ -266,8 +367,10 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
           id?: string
           remarks?: string | null
+          reminded_at?: string | null
           source_answer?: string | null
           source_question?: string | null
           status?: string
@@ -279,8 +382,10 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
           id?: string
           remarks?: string | null
+          reminded_at?: string | null
           source_answer?: string | null
           source_question?: string | null
           status?: string

@@ -14,11 +14,14 @@ export type TaskRow = {
   source_answer: string | null;
   status: (typeof STATUSES)[number];
   remarks: string | null;
+  due_date: string | null;
+  reminded_at: string | null;
   created_at: string;
   updated_at: string;
   assignee_name?: string | null;
   creator_name?: string | null;
 };
+
 
 // LIST tasks (owned or assigned to me)
 export const listTasks = createServerFn({ method: "GET" })
@@ -60,6 +63,7 @@ export const createTask = createServerFn({ method: "POST" })
     description?: string;
     source_question?: string;
     source_answer?: string;
+    due_date?: string | null;
   }) =>
     z
       .object({
@@ -67,6 +71,7 @@ export const createTask = createServerFn({ method: "POST" })
         description: z.string().max(4000).optional(),
         source_question: z.string().max(2000).optional(),
         source_answer: z.string().max(6000).optional(),
+        due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
       })
       .parse(d),
   )
@@ -81,7 +86,7 @@ export const createTask = createServerFn({ method: "POST" })
     return row as TaskRow;
   });
 
-// UPDATE (status / remarks / title / description)
+// UPDATE (status / remarks / title / description / due date)
 export const updateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: {
@@ -90,6 +95,7 @@ export const updateTask = createServerFn({ method: "POST" })
     remarks?: string | null;
     title?: string;
     description?: string | null;
+    due_date?: string | null;
   }) =>
     z
       .object({
@@ -98,9 +104,11 @@ export const updateTask = createServerFn({ method: "POST" })
         remarks: z.string().max(4000).nullable().optional(),
         title: z.string().min(1).max(300).optional(),
         description: z.string().max(4000).nullable().optional(),
+        due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
       })
       .parse(d),
   )
+
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { id, ...rest } = data;
