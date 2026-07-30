@@ -21,6 +21,9 @@ import {
   Trash2,
   Pencil,
   MessageSquarePlus,
+  CalendarDays,
+  FileText,
+
 } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { runReminderSweep } from "@/lib/obligations.functions";
 import { RegIQLogo } from "@/components/regiq/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -45,6 +50,8 @@ import type { ChatRow, ProjectRow } from "@/lib/chats.functions";
 const NAV = [
   { to: "/app/chat", label: "Ask RegIQ", icon: MessageSquareText, badge: null, group: "chat" as const },
   { to: "/app/tasks", label: "Tasks & Flags", icon: CheckSquare, badge: null, group: null },
+  { to: "/app/calendar", label: "Calendar", icon: CalendarDays, badge: null, group: null },
+  { to: "/app/memos", label: "Memos", icon: FileText, badge: null, group: null },
   { to: "/app/sources", label: "Data Sources", icon: Database, badge: null, group: null },
   { to: "/app/notifications", label: "Notifications", icon: Bell, badge: "live" as const, group: null },
   { to: "/app/settings", label: "Settings", icon: Settings, badge: null, group: "settings" as const },
@@ -53,10 +60,13 @@ const NAV = [
 const TITLES: Record<string, string> = {
   "/app/chat": "Ask RegIQ",
   "/app/tasks": "Tasks & Flags",
+  "/app/calendar": "Compliance Calendar",
+  "/app/memos": "Regulatory Memos",
   "/app/sources": "Data Sources",
   "/app/notifications": "Notifications",
   "/app/settings": "Settings",
 };
+
 
 export function AppLayout(props: {
   children: ReactNode;
@@ -100,12 +110,30 @@ function AppLayoutInner({
   const activeChatId = search?.chatId ?? null;
   const navigate = useNavigate();
   const title = TITLES[pathname] ?? "RegIQ";
+  const sweep = useServerFn(runReminderSweep);
+
+  // Raise in-app deadline reminders once per browser session.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem("regiq-reminder-sweep")) return;
+    sessionStorage.setItem("regiq-reminder-sweep", "1");
+    void sweep()
+      .then((r) => {
+        const res = r as { created: number };
+        if (res.created > 0) {
+          toast(`${res.created} upcoming deadline reminder(s) added to Notifications`);
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out");
     navigate({ to: "/auth" });
   };
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">

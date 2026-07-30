@@ -18,7 +18,9 @@ import { Route as AppTasksRouteImport } from './routes/app.tasks'
 import { Route as AppSourcesRouteImport } from './routes/app.sources'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
+import { Route as AppMemosRouteImport } from './routes/app.memos'
 import { Route as AppChatRouteImport } from './routes/app.chat'
+import { Route as AppCalendarRouteImport } from './routes/app.calendar'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -69,9 +71,19 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMemosRoute = AppMemosRouteImport.update({
+  id: '/memos',
+  path: '/memos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppChatRoute = AppChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -105,7 +117,9 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/chat': typeof AppChatRoute
+  '/app/memos': typeof AppMemosRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -120,7 +134,9 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/chat': typeof AppChatRoute
+  '/app/memos': typeof AppMemosRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -137,7 +153,9 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/app/calendar': typeof AppCalendarRoute
   '/app/chat': typeof AppChatRoute
+  '/app/memos': typeof AppMemosRoute
   '/app/notifications': typeof AppNotificationsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/sources': typeof AppSourcesRoute
@@ -155,7 +173,9 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/app/calendar'
     | '/app/chat'
+    | '/app/memos'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -170,7 +190,9 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/app/calendar'
     | '/app/chat'
+    | '/app/memos'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -186,7 +208,9 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/app/calendar'
     | '/app/chat'
+    | '/app/memos'
     | '/app/notifications'
     | '/app/settings'
     | '/app/sources'
@@ -272,11 +296,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/memos': {
+      id: '/app/memos'
+      path: '/memos'
+      fullPath: '/app/memos'
+      preLoaderRoute: typeof AppMemosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/chat': {
       id: '/app/chat'
       path: '/chat'
       fullPath: '/app/chat'
       preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/calendar': {
+      id: '/app/calendar'
+      path: '/calendar'
+      fullPath: '/app/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/.well-known/oauth-protected-resource': {
@@ -311,7 +349,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppCalendarRoute: typeof AppCalendarRoute
   AppChatRoute: typeof AppChatRoute
+  AppMemosRoute: typeof AppMemosRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSourcesRoute: typeof AppSourcesRoute
@@ -320,7 +360,9 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCalendarRoute: AppCalendarRoute,
   AppChatRoute: AppChatRoute,
+  AppMemosRoute: AppMemosRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSourcesRoute: AppSourcesRoute,
