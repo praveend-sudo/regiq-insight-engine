@@ -29,13 +29,15 @@ import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useProjectsChats } from "@/hooks/use-projects-chats";
 
-const chatSearchSchema = z.object({
-  chatId: fallback(z.string().optional(), undefined),
-  newIn: fallback(z.string().optional(), undefined),
+type ChatSearch = { chatId?: string; newIn?: string };
+
+const validateChatSearch = (search: Record<string, unknown>): ChatSearch => ({
+  chatId: typeof search.chatId === "string" && search.chatId ? search.chatId : undefined,
+  newIn: typeof search.newIn === "string" && search.newIn ? search.newIn : undefined,
 });
 
 export const Route = createFileRoute("/app/chat")({
-  validateSearch: zodValidator(chatSearchSchema),
+  validateSearch: validateChatSearch,
   component: ChatPage,
 });
 
