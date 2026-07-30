@@ -2,8 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { z } from "zod";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { AppLayout } from "@/components/regiq/AppLayout";
 import { AnswerCard } from "@/components/regiq/AnswerCard";
 import { ReferencesPanel } from "@/components/regiq/ReferencesPanel";
