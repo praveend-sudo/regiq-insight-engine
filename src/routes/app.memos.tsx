@@ -306,6 +306,36 @@ function MemoEditor({
         className="mt-3 min-h-[420px] font-mono text-sm leading-relaxed"
       />
       <LinkedDocsChips docs={memo.linked_docs ?? []} />
+
+      <div className="mt-4 grid gap-3 rounded-xl border bg-muted/30 p-3 sm:grid-cols-2">
+        <div className="sm:col-span-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <AlarmClock className="h-3.5 w-3.5" /> Memo reminder
+        </div>
+        <div>
+          <label className="text-sm font-medium">Follow-up / circulation date</label>
+          <Input type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Remind me days before</label>
+          <Input
+            type="number"
+            min={0}
+            max={120}
+            value={remindDays}
+            onChange={(e) => setRemindDays(e.target.value)}
+          />
+        </div>
+        <p className="sm:col-span-2 text-xs text-muted-foreground">
+          {memo.status === "sent"
+            ? "This memo has been sent — no further reminders will be raised."
+            : followUp
+              ? `A reminder appears under Notifications → Reminders${
+                  memo.reminded_at ? " (already raised for this schedule)" : ""
+                }.`
+              : "Set a date to get memo reminders in Notifications."}
+        </p>
+      </div>
+
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         <Button variant="ghost" className="gap-1.5" onClick={onDelete}>
           <Trash2 className="h-4 w-4" /> Delete
@@ -316,7 +346,9 @@ function MemoEditor({
         <Button
           className="gap-1.5 bg-gradient-brand text-white"
           disabled={!dirty}
-          onClick={() => onSave(memo, title.trim(), body, docs)}
+          onClick={() =>
+            onSave(memo, title.trim(), body, docs, followUp || null, Number(remindDays || 0))
+          }
         >
           <Save className="h-4 w-4" /> Save
         </Button>
