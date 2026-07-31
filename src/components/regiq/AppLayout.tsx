@@ -111,20 +111,22 @@ function AppLayoutInner({
   const navigate = useNavigate();
   const title = TITLES[pathname] ?? "RegIQ";
   const sweep = useServerFn(runReminderSweep);
+  const memoSweep = useServerFn(runMemoReminderSweep);
 
   // Raise in-app deadline reminders once per browser session.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem("regiq-reminder-sweep")) return;
     sessionStorage.setItem("regiq-reminder-sweep", "1");
-    void sweep()
-      .then((r) => {
-        const res = r as { created: number };
-        if (res.created > 0) {
-          toast(`${res.created} upcoming deadline reminder(s) added to Notifications`);
-        }
-      })
-      .catch(() => undefined);
+    void Promise.all([
+      sweep().catch(() => ({ created: 0 })),
+      memoSweep().catch(() => ({ created: 0 })),
+    ]).then(([a, b]) => {
+      const created = (a as { created: number }).created;
+      const memoCreated = (b as { created: number }).created;
+      if (created > 0) toast(`${created} upcoming deadline reminder(s) added to Notifications`);
+      if (memoCreated > 0) toast(`${memoCreated} memo reminder(s) added to Notifications`);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
