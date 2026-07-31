@@ -24,9 +24,18 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FileText, Sparkles, Mail, Trash2, Save, Loader2 } from "lucide-react";
+import { DocumentPicker, LinkedDocsChips } from "@/components/regiq/DocumentPicker";
+import type { LinkedDoc } from "@/lib/doc-library";
+
+type MemoSearch = { change?: string; issuer?: string; notificationId?: string };
 
 export const Route = createFileRoute("/app/memos")({
   component: MemosPage,
+  validateSearch: (search: Record<string, unknown>): MemoSearch => ({
+    change: typeof search.change === "string" ? search.change : undefined,
+    issuer: typeof search.issuer === "string" ? search.issuer : undefined,
+    notificationId: typeof search.notificationId === "string" ? search.notificationId : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Regulatory Change Memos | RegIQ" },
@@ -47,6 +56,7 @@ export const Route = createFileRoute("/app/memos")({
 });
 
 function MemosPage() {
+  const search = Route.useSearch();
   const [memos, setMemos] = useState<MemoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -72,10 +82,28 @@ function MemosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onGenerate = async (change: string, issuer: string, audience: string) => {
+  // Prefill + open the draft dialog when arriving from a smart notification.
+  useEffect(() => {
+    if (search.change) setShowNew(true);
+  }, [search.change]);
+
+  const onGenerate = async (
+    change: string,
+    issuer: string,
+    audience: string,
+    docs: LinkedDoc[],
+  ) => {
     setGenerating(true);
     try {
-      const row = (await fnGen({ data: { change, issuer: issuer || undefined, audience: audience || undefined } })) as MemoRow;
+      const row = (await fnGen({
+        data: {
+          change,
+          issuer: issuer || undefined,
+          audience: audience || undefined,
+          linked_docs: docs,
+          source_notification_id: search.notificationId ?? null,
+        },
+      })) as MemoRow;
       setMemos((p) => [row, ...p]);
       setActive(row);
       setShowNew(false);
@@ -87,9 +115,9 @@ function MemosPage() {
     }
   };
 
-  const onSave = async (memo: MemoRow, title: string, body: string) => {
+  const onSave = async (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => {
     try {
-      const row = (await fnUpdate({ data: { id: memo.id, title, body } })) as MemoRow;
+      const row = (await fnUpdate({ data: { id: memo.id, title, body, linked_docs: docs } })) as MemoRow;
       setMemos((p) => p.map((m) => (m.id === row.id ? row : m)));
       setActive(row);
       toast.success("Memo saved");
@@ -143,6 +171,7 @@ function MemosPage() {
                     {m.issuer ? `${m.issuer} · ` : ""}
                     {new Date(m.created_at).toLocaleDateString()}
                     {m.status === "sent" ? " · sent" : ""}
+                    {m.linked_docs?.length ? ` · ${m.linked_docs.length} linked doc(s)` : ""}
                   </p>
                 </button>
               ))
@@ -175,7 +204,14 @@ function MemosPage() {
         </div>
       </div>
 
-      <NewMemoDialog open={showNew} busy={generating} onOpenChange={setShowNew} onGenerate={onGenerate} />
+      <NewMemoDialog
+        open={showNew}
+        busy={generating}
+        onOpenChange={setShowNew}
+        onGenerate={onGenerate}
+        initialChange={search.change ?? ""}
+        initialIssuer={search.issuer ?? ""}
+      />
       <EmailSummaryDialog
         open={!!emailMemo}
         onOpenChange={async (v) => {
@@ -204,13 +240,17 @@ function MemoEditor({
   onDelete,
 }: {
   memo: MemoRow;
-  onSave: (memo: MemoRow, title: string, body: string) => void;
+  onSave: (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => void;
   onEmail: () => void;
   onDelete: () => void;
 }) {
   const [title, setTitle] = useState(memo.title);
   const [body, setBody] = useState(memo.body);
-  const dirty = title !== memo.title || body !== memo.body;
+  const [docs, setDocs] = useState<LinkedDoc[]>(memo.linked_docs ?? []);
+  const dirty =
+    title !== memo.title ||
+    body !== memo.body ||
+    JSON.stringify(docs) !== JSON.stringify(memo.linked_docs ?? []);
 
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-card">
@@ -225,11 +265,15 @@ function MemoEditor({
           {memo.change_summary}
         </div>
       )}
+      <div className="mt-3">
+        <DocumentPicker value={docs} onChange={setDocs} />
+      </div>
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         className="mt-3 min-h-[420px] font-mono text-sm leading-relaxed"
       />
+      <LinkedDocsChips docs={memo.linked_docs ?? []} />
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         <Button variant="ghost" className="gap-1.5" onClick={onDelete}>
           <Trash2 className="h-4 w-4" /> Delete
@@ -240,7 +284,7 @@ function MemoEditor({
         <Button
           className="gap-1.5 bg-gradient-brand text-white"
           disabled={!dirty}
-          onClick={() => onSave(memo, title.trim(), body)}
+          onClick={() => onSave(memo, title.trim(), body, docs)}
         >
           <Save className="h-4 w-4" /> Save
         </Button>
@@ -254,18 +298,28 @@ function NewMemoDialog({
   busy,
   onOpenChange,
   onGenerate,
+  initialChange,
+  initialIssuer,
 }: {
   open: boolean;
   busy: boolean;
   onOpenChange: (v: boolean) => void;
-  onGenerate: (change: string, issuer: string, audience: string) => void;
+  onGenerate: (change: string, issuer: string, audience: string, docs: LinkedDoc[]) => void;
+  initialChange: string;
+  initialIssuer: string;
 }) {
-  const [change, setChange] = useState("");
-  const [issuer, setIssuer] = useState("");
+  const [change, setChange] = useState(initialChange);
+  const [issuer, setIssuer] = useState(initialIssuer);
   const [audience, setAudience] = useState("");
+  const [docs, setDocs] = useState<LinkedDoc[]>([]);
   useEffect(() => {
-    if (!open) { setChange(""); setIssuer(""); setAudience(""); }
-  }, [open]);
+    if (open) {
+      setChange(initialChange);
+      setIssuer(initialIssuer);
+    } else {
+      setChange(""); setIssuer(""); setAudience(""); setDocs([]);
+    }
+  }, [open, initialChange, initialIssuer]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -294,13 +348,14 @@ function NewMemoDialog({
             <label className="text-sm font-medium">Audience</label>
             <Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="Senior Management and Compliance Committee" />
           </div>
+          <DocumentPicker value={docs} onChange={setDocs} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             className="gap-1.5 bg-gradient-brand text-white"
             disabled={change.trim().length < 3 || busy}
-            onClick={() => onGenerate(change.trim(), issuer.trim(), audience.trim())}
+            onClick={() => onGenerate(change.trim(), issuer.trim(), audience.trim(), docs)}
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {busy ? "Drafting…" : "Draft memo"}
