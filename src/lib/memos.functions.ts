@@ -23,6 +23,9 @@ export type MemoRow = {
   sent_at: string | null;
   linked_docs: LinkedDoc[];
   source_notification_id: string | null;
+  follow_up_date: string | null;
+  remind_days_before: number;
+  reminded_at: string | null;
   created_at: string;
   updated_at: string;
 };
