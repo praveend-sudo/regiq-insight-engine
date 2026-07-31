@@ -23,7 +23,7 @@ import {
 } from "@/lib/memos.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { FileText, Sparkles, Mail, Trash2, Save, Loader2 } from "lucide-react";
+import { FileText, Sparkles, Mail, Trash2, Save, Loader2, AlarmClock } from "lucide-react";
 import { DocumentPicker, LinkedDocsChips } from "@/components/regiq/DocumentPicker";
 import type { LinkedDoc } from "@/lib/doc-library";
 
@@ -115,9 +115,30 @@ function MemosPage() {
     }
   };
 
-  const onSave = async (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => {
+  const onSave = async (
+    memo: MemoRow,
+    title: string,
+    body: string,
+    docs: LinkedDoc[],
+    followUp: string | null,
+    remindDays: number,
+  ) => {
     try {
-      const row = (await fnUpdate({ data: { id: memo.id, title, body, linked_docs: docs } })) as MemoRow;
+      const row = (await fnUpdate({
+        data: {
+          id: memo.id,
+          title,
+          body,
+          linked_docs: docs,
+          follow_up_date: followUp,
+          remind_days_before: remindDays,
+          // re-arm the reminder whenever the schedule changes
+          reminded_at:
+            followUp !== memo.follow_up_date || remindDays !== memo.remind_days_before
+              ? null
+              : undefined,
+        },
+      })) as MemoRow;
       setMemos((p) => p.map((m) => (m.id === row.id ? row : m)));
       setActive(row);
       toast.success("Memo saved");
@@ -240,16 +261,27 @@ function MemoEditor({
   onDelete,
 }: {
   memo: MemoRow;
-  onSave: (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => void;
+  onSave: (
+    memo: MemoRow,
+    title: string,
+    body: string,
+    docs: LinkedDoc[],
+    followUp: string | null,
+    remindDays: number,
+  ) => void;
   onEmail: () => void;
   onDelete: () => void;
 }) {
   const [title, setTitle] = useState(memo.title);
   const [body, setBody] = useState(memo.body);
   const [docs, setDocs] = useState<LinkedDoc[]>(memo.linked_docs ?? []);
+  const [followUp, setFollowUp] = useState(memo.follow_up_date ?? "");
+  const [remindDays, setRemindDays] = useState(String(memo.remind_days_before ?? 3));
   const dirty =
     title !== memo.title ||
     body !== memo.body ||
+    (followUp || null) !== (memo.follow_up_date ?? null) ||
+    Number(remindDays || 0) !== (memo.remind_days_before ?? 3) ||
     JSON.stringify(docs) !== JSON.stringify(memo.linked_docs ?? []);
 
   return (
@@ -274,6 +306,36 @@ function MemoEditor({
         className="mt-3 min-h-[420px] font-mono text-sm leading-relaxed"
       />
       <LinkedDocsChips docs={memo.linked_docs ?? []} />
+
+      <div className="mt-4 grid gap-3 rounded-xl border bg-muted/30 p-3 sm:grid-cols-2">
+        <div className="sm:col-span-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <AlarmClock className="h-3.5 w-3.5" /> Memo reminder
+        </div>
+        <div>
+          <label className="text-sm font-medium">Follow-up / circulation date</label>
+          <Input type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Remind me days before</label>
+          <Input
+            type="number"
+            min={0}
+            max={120}
+            value={remindDays}
+            onChange={(e) => setRemindDays(e.target.value)}
+          />
+        </div>
+        <p className="sm:col-span-2 text-xs text-muted-foreground">
+          {memo.status === "sent"
+            ? "This memo has been sent — no further reminders will be raised."
+            : followUp
+              ? `A reminder appears under Notifications → Reminders${
+                  memo.reminded_at ? " (already raised for this schedule)" : ""
+                }.`
+              : "Set a date to get memo reminders in Notifications."}
+        </p>
+      </div>
+
       <div className="mt-3 flex flex-wrap justify-end gap-2">
         <Button variant="ghost" className="gap-1.5" onClick={onDelete}>
           <Trash2 className="h-4 w-4" /> Delete
@@ -284,7 +346,9 @@ function MemoEditor({
         <Button
           className="gap-1.5 bg-gradient-brand text-white"
           disabled={!dirty}
-          onClick={() => onSave(memo, title.trim(), body, docs)}
+          onClick={() =>
+            onSave(memo, title.trim(), body, docs, followUp || null, Number(remindDays || 0))
+          }
         >
           <Save className="h-4 w-4" /> Save
         </Button>

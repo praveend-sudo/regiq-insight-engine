@@ -23,6 +23,9 @@ export type MemoRow = {
   sent_at: string | null;
   linked_docs: LinkedDoc[];
   source_notification_id: string | null;
+  follow_up_date: string | null;
+  remind_days_before: number;
+  reminded_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -101,6 +104,13 @@ export const updateMemo = createServerFn({ method: "POST" })
         status: z.enum(["draft", "sent"]).optional(),
         sent_at: z.string().nullable().optional(),
         linked_docs: z.array(linkedDocSchema).max(30).optional(),
+        follow_up_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
+        remind_days_before: z.number().int().min(0).max(120).optional(),
+        reminded_at: z.string().nullable().optional(),
       })
       .parse(d),
   )
@@ -123,4 +133,72 @@ export const deleteMemo = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("memos").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * Raises in-app "reminder" notifications for memos that are still unsent and
+ * whose follow-up date falls inside their configured reminder window.
+ * Returns the memos that also need an email nudge.
+ */
+export const runMemoReminderSweep = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const now = new Date();
+    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const days = (a: string, b: string) =>
+      Math.round(
+        (new Date(`${b}T00:00:00`).getTime() - new Date(`${a}T00:00:00`).getTime()) / 86400000,
+      );
+
+    const { data, error } = await supabase
+      .from("memos")
+      .select("*")
+      .eq("status", "draft")
+      .not("follow_up_date", "is", null);
+    if (error) throw new Error(error.message);
+
+    const emailQueue: Array<{
+      kind: "memo";
+      id: string;
+      title: string;
+      dueDate: string;
+      recipients: string[];
+      body: string;
+    }> = [];
+
+    for (const raw of (data ?? []) as unknown as MemoRow[]) {
+      const due = raw.follow_up_date as string;
+      const delta = days(todayISO, due);
+      if (delta > (raw.remind_days_before ?? 3)) continue;
+      if (raw.reminded_at) continue;
+
+      await supabase.from("notifications").insert({
+        user_id: userId,
+        title:
+          delta < 0
+            ? `Overdue memo: ${raw.title}`
+            : `Memo due ${delta === 0 ? "today" : `in ${delta} day(s)`}: ${raw.title}`,
+        summary:
+          raw.change_summary ??
+          `This memo is still in draft and needs to be circulated by ${due}.`,
+        impact: delta < 0 ? "high" : "medium",
+        issuer: raw.issuer ?? "RegIQ",
+        category: "reminder",
+        linked: [],
+        ai_insight: null,
+      });
+      await supabase.from("memos").update({ reminded_at: new Date().toISOString() }).eq("id", raw.id);
+
+      emailQueue.push({
+        kind: "memo",
+        id: raw.id,
+        title: raw.title,
+        dueDate: due,
+        recipients: raw.recipient_email ? [raw.recipient_email] : [],
+        body: `Reminder: the memo "${raw.title}" is still a draft and is due on ${due}.\n\n${raw.body}`,
+      });
+    }
+
+    return { created: emailQueue.length, emailQueue };
   });
