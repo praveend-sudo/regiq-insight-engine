@@ -149,9 +149,12 @@ export const updateTask = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { id, ...rest } = data;
-    const patch = { ...rest } as Record<string, unknown>;
-    // Re-arm the reminder whenever the schedule changes.
-    if (rest.due_date !== undefined || rest.remind_days_before !== undefined) patch.reminded_at = null;
+    const rearm = rest.due_date !== undefined || rest.remind_days_before !== undefined;
+    const patch = {
+      ...rest,
+      ...(rest.linked_docs ? { linked_docs: rest.linked_docs as unknown as never } : {}),
+      ...(rearm ? { reminded_at: null } : {}),
+    };
     const { data: row, error } = await supabase
       .from("tasks")
       .update(patch)
