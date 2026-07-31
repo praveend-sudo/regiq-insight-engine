@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { LinkedDoc } from "@/lib/doc-library";
+
+const linkedDocSchema = z.object({
+  id: z.string(),
+  type: z.enum(["external", "internal"]),
+  issuer: z.string(),
+  title: z.string(),
+  section: z.string().optional(),
+});
 
 const STATUSES = ["open", "in_progress", "done"] as const;
 
@@ -16,6 +25,8 @@ export type TaskRow = {
   remarks: string | null;
   due_date: string | null;
   reminded_at: string | null;
+  remind_days_before: number;
+  linked_docs: LinkedDoc[];
   created_at: string;
   updated_at: string;
   assignee_name?: string | null;
@@ -64,6 +75,9 @@ export const createTask = createServerFn({ method: "POST" })
     source_question?: string;
     source_answer?: string;
     due_date?: string | null;
+    remind_days_before?: number;
+    linked_docs?: LinkedDoc[];
+    assignee_email?: string | null;
   }) =>
     z
       .object({
@@ -72,14 +86,33 @@ export const createTask = createServerFn({ method: "POST" })
         source_question: z.string().max(2000).optional(),
         source_answer: z.string().max(6000).optional(),
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+        remind_days_before: z.number().int().min(0).max(120).optional(),
+        linked_docs: z.array(linkedDocSchema).max(30).optional(),
+        assignee_email: z.string().email().nullable().optional(),
       })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    const { assignee_email, linked_docs, ...rest } = data;
+    let assignedTo: string | null = null;
+    if (assignee_email) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: found, error: rpcErr } = await supabaseAdmin.rpc("find_user_id_by_email", {
+        _email: assignee_email,
+      });
+      if (rpcErr) throw new Error(rpcErr.message);
+      if (!found) throw new Error(`No user found with email ${assignee_email}`);
+      assignedTo = found as string;
+    }
     const { data: row, error } = await supabase
       .from("tasks")
-      .insert({ ...data, user_id: userId })
+      .insert({
+        ...rest,
+        linked_docs: (linked_docs ?? []) as unknown as never,
+        assigned_to: assignedTo,
+        user_id: userId,
+      })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
@@ -96,6 +129,8 @@ export const updateTask = createServerFn({ method: "POST" })
     title?: string;
     description?: string | null;
     due_date?: string | null;
+    remind_days_before?: number;
+    linked_docs?: LinkedDoc[];
   }) =>
     z
       .object({
@@ -105,6 +140,8 @@ export const updateTask = createServerFn({ method: "POST" })
         title: z.string().min(1).max(300).optional(),
         description: z.string().max(4000).nullable().optional(),
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+        remind_days_before: z.number().int().min(0).max(120).optional(),
+        linked_docs: z.array(linkedDocSchema).max(30).optional(),
       })
       .parse(d),
   )
@@ -112,9 +149,12 @@ export const updateTask = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { id, ...rest } = data;
+    const patch = { ...rest } as Record<string, unknown>;
+    // Re-arm the reminder whenever the schedule changes.
+    if (rest.due_date !== undefined || rest.remind_days_before !== undefined) patch.reminded_at = null;
     const { data: row, error } = await supabase
       .from("tasks")
-      .update(rest)
+      .update(patch)
       .eq("id", id)
       .select("*")
       .single();
