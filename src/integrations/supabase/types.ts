@@ -217,10 +217,13 @@ export type Database = {
           body: string
           change_summary: string | null
           created_at: string
+          follow_up_date: string | null
           id: string
           issuer: string | null
           linked_docs: Json
           recipient_email: string | null
+          remind_days_before: number
+          reminded_at: string | null
           sent_at: string | null
           source_notification_id: string | null
           status: string
@@ -232,10 +235,13 @@ export type Database = {
           body?: string
           change_summary?: string | null
           created_at?: string
+          follow_up_date?: string | null
           id?: string
           issuer?: string | null
           linked_docs?: Json
           recipient_email?: string | null
+          remind_days_before?: number
+          reminded_at?: string | null
           sent_at?: string | null
           source_notification_id?: string | null
           status?: string
@@ -247,10 +253,13 @@ export type Database = {
           body?: string
           change_summary?: string | null
           created_at?: string
+          follow_up_date?: string | null
           id?: string
           issuer?: string | null
           linked_docs?: Json
           recipient_email?: string | null
+          remind_days_before?: number
+          reminded_at?: string | null
           sent_at?: string | null
           source_notification_id?: string | null
           status?: string
