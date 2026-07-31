@@ -23,7 +23,7 @@ import {
 } from "@/lib/memos.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { FileText, Sparkles, Mail, Trash2, Save, Loader2 } from "lucide-react";
+import { FileText, Sparkles, Mail, Trash2, Save, Loader2, AlarmClock } from "lucide-react";
 import { DocumentPicker, LinkedDocsChips } from "@/components/regiq/DocumentPicker";
 import type { LinkedDoc } from "@/lib/doc-library";
 
