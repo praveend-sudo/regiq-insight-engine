@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { runReminderSweep } from "@/lib/obligations.functions";
+import { runMemoReminderSweep } from "@/lib/memos.functions";
 import { RegIQLogo } from "@/components/regiq/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
