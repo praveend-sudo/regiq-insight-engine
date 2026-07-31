@@ -115,9 +115,30 @@ function MemosPage() {
     }
   };
 
-  const onSave = async (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => {
+  const onSave = async (
+    memo: MemoRow,
+    title: string,
+    body: string,
+    docs: LinkedDoc[],
+    followUp: string | null,
+    remindDays: number,
+  ) => {
     try {
-      const row = (await fnUpdate({ data: { id: memo.id, title, body, linked_docs: docs } })) as MemoRow;
+      const row = (await fnUpdate({
+        data: {
+          id: memo.id,
+          title,
+          body,
+          linked_docs: docs,
+          follow_up_date: followUp,
+          remind_days_before: remindDays,
+          // re-arm the reminder whenever the schedule changes
+          reminded_at:
+            followUp !== memo.follow_up_date || remindDays !== memo.remind_days_before
+              ? null
+              : undefined,
+        },
+      })) as MemoRow;
       setMemos((p) => p.map((m) => (m.id === row.id ? row : m)));
       setActive(row);
       toast.success("Memo saved");
