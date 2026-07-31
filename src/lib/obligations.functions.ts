@@ -140,7 +140,7 @@ export const runReminderSweep = createServerFn({ method: "POST" })
     // --- Tasks with a target completion date ---
     const { data: tasks } = await supabase
       .from("tasks")
-      .select("id, title, description, due_date, status, reminded_at, assigned_to, user_id")
+      .select("id, title, description, due_date, status, reminded_at, assigned_to, user_id, remind_days_before")
       .or(`user_id.eq.${userId},assigned_to.eq.${userId}`)
       .not("due_date", "is", null)
       .neq("status", "done");
@@ -148,7 +148,8 @@ export const runReminderSweep = createServerFn({ method: "POST" })
     for (const t of tasks ?? []) {
       const due = t.due_date as string;
       const delta = days(todayISO, due);
-      if (delta > 3) continue;
+      const lead = (t as { remind_days_before?: number }).remind_days_before ?? 3;
+      if (delta > lead) continue;
       if (t.reminded_at) continue;
       await supabase.from("notifications").insert({
         user_id: userId,
@@ -156,6 +157,7 @@ export const runReminderSweep = createServerFn({ method: "POST" })
         summary: t.description ?? "Target completion date is approaching.",
         impact: delta < 0 ? "high" : "medium",
         issuer: "RegIQ",
+        category: "reminder",
         linked: [],
         ai_insight: null,
       });
@@ -190,6 +192,7 @@ export const runReminderSweep = createServerFn({ method: "POST" })
         summary: ob.description ?? `Scheduled ${ob.frequency.replace("_", "-")} submission due ${ob.next_due_date}.`,
         impact: ob.audience === "regulator" ? "high" : "medium",
         issuer: ob.issuer ?? "RegIQ",
+        category: "reminder",
         linked: [],
         ai_insight: null,
       });
