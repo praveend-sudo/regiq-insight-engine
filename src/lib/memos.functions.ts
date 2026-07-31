@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { describeDocs, type LinkedDoc } from "@/lib/doc-library";
+
+const linkedDocSchema = z.object({
+  id: z.string(),
+  type: z.enum(["external", "internal"]),
+  issuer: z.string(),
+  title: z.string(),
+  section: z.string().optional(),
+});
 
 export type MemoRow = {
   id: string;
@@ -12,6 +21,8 @@ export type MemoRow = {
   recipient_email: string | null;
   status: "draft" | "sent";
   sent_at: string | null;
+  linked_docs: LinkedDoc[];
+  source_notification_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +47,8 @@ export const generateMemo = createServerFn({ method: "POST" })
         change: z.string().min(3).max(4000),
         issuer: z.string().max(120).optional(),
         audience: z.string().max(200).optional(),
+        linked_docs: z.array(linkedDocSchema).max(30).optional(),
+        source_notification_id: z.string().uuid().nullable().optional(),
       })
       .parse(d),
   )
@@ -50,7 +63,11 @@ export const generateMemo = createServerFn({ method: "POST" })
         },
         {
           role: "user",
-          content: `Regulatory change: ${data.change}\nIssuer: ${data.issuer ?? "unspecified"}\nAudience: ${data.audience ?? "Senior Management and Compliance Committee"}`,
+          content: `Regulatory change: ${data.change}\nIssuer: ${data.issuer ?? "unspecified"}\nAudience: ${data.audience ?? "Senior Management and Compliance Committee"}${
+            data.linked_docs?.length
+              ? `\n\nReference these linked documents explicitly in the memo (cite issuer, title and section):\n${describeDocs(data.linked_docs)}`
+              : ""
+          }`,
         },
       ],
     });
@@ -63,6 +80,8 @@ export const generateMemo = createServerFn({ method: "POST" })
         change_summary: data.change,
         issuer: data.issuer ?? null,
         body: result.body ?? "",
+        linked_docs: (data.linked_docs ?? []) as unknown as never,
+        source_notification_id: data.source_notification_id ?? null,
       })
       .select("*")
       .single();
@@ -81,6 +100,7 @@ export const updateMemo = createServerFn({ method: "POST" })
         recipient_email: z.string().email().nullable().optional(),
         status: z.enum(["draft", "sent"]).optional(),
         sent_at: z.string().nullable().optional(),
+        linked_docs: z.array(linkedDocSchema).max(30).optional(),
       })
       .parse(d),
   )

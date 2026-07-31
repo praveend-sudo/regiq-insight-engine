@@ -37,6 +37,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, CheckSquare, Flag, Mail, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { EVENT_STYLE, toISODate } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
+import { DocumentPicker, LinkedDocsChips } from "@/components/regiq/DocumentPicker";
+import type { LinkedDoc } from "@/lib/doc-library";
 import { EmailSummaryDialog } from "@/components/regiq/EmailSummaryDialog";
 
 export const Route = createFileRoute("/app/tasks")({
@@ -126,10 +128,17 @@ function TasksPage() {
     }
   };
 
-  const onCreate = async (title: string, description: string, dueDate: string) => {
+  const onCreate = async (v: TaskFormValues) => {
     try {
       const row = await fnCreate({
-        data: { title, description: description || undefined, due_date: dueDate || null },
+        data: {
+          title: v.title,
+          description: v.description || undefined,
+          due_date: v.dueDate || null,
+          remind_days_before: v.remindDays,
+          linked_docs: v.docs,
+          assignee_email: v.assigneeEmail || null,
+        },
       });
       setTasks((p) => [row as TaskRow, ...p]);
       setShowNew(false);
@@ -139,10 +148,17 @@ function TasksPage() {
     }
   };
 
-  const onEditSave = async (id: string, title: string, description: string, dueDate: string) => {
+  const onEditSave = async (id: string, v: TaskFormValues) => {
     try {
       const updated = await fnUpdate({
-        data: { id, title, description: description || null, due_date: dueDate || null },
+        data: {
+          id,
+          title: v.title,
+          description: v.description || null,
+          due_date: v.dueDate || null,
+          remind_days_before: v.remindDays,
+          linked_docs: v.docs,
+        },
       });
       setTasks((p) => p.map((t) => (t.id === id ? { ...t, ...(updated as TaskRow) } : t)));
       setEditTask(null);
@@ -447,8 +463,20 @@ function TaskCard({
                 </span>
               </>
             )}
+            {task.due_date && (
+              <>
+                <span>·</span>
+                <span>
+                  Reminder{" "}
+                  {(task.remind_days_before ?? 3) === 0
+                    ? "on the day"
+                    : `${task.remind_days_before ?? 3} day(s) before`}
+                </span>
+              </>
+            )}
           </div>
 
+          <LinkedDocsChips docs={task.linked_docs ?? []} />
         </div>
         <div className="flex items-center gap-1.5">
           <Select value={task.status} onValueChange={(v) => onStatus(v as TaskRow["status"])}>
@@ -505,6 +533,95 @@ function TaskCard({
   );
 }
 
+export type TaskFormValues = {
+  title: string;
+  description: string;
+  dueDate: string;
+  remindDays: number;
+  docs: LinkedDoc[];
+  assigneeEmail: string;
+};
+
+function TaskFields({
+  values,
+  onChange,
+  showAssignee,
+}: {
+  values: TaskFormValues;
+  onChange: (v: TaskFormValues) => void;
+  showAssignee: boolean;
+}) {
+  const set = <K extends keyof TaskFormValues>(k: K, v: TaskFormValues[K]) =>
+    onChange({ ...values, [k]: v });
+  return (
+    <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1">
+      <div>
+        <label className="text-sm font-medium">Title</label>
+        <Input
+          value={values.title}
+          onChange={(e) => set("title", e.target.value)}
+          placeholder="e.g., Update incident response SLA"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Description</label>
+        <Textarea
+          value={values.description}
+          onChange={(e) => set("description", e.target.value)}
+          placeholder="Optional details"
+          rows={4}
+        />
+      </div>
+      {showAssignee && (
+        <div>
+          <label className="text-sm font-medium">Assign to (email)</label>
+          <Input
+            type="email"
+            value={values.assigneeEmail}
+            onChange={(e) => set("assigneeEmail", e.target.value)}
+            placeholder="teammate@bank.lk — must have a RegIQ account"
+          />
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-sm font-medium">Target completion date</label>
+          <Input type="date" value={values.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Remind me</label>
+          <Select
+            value={String(values.remindDays)}
+            onValueChange={(v) => set("remindDays", Number(v))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">On the due date</SelectItem>
+              <SelectItem value="1">1 day before</SelectItem>
+              <SelectItem value="3">3 days before</SelectItem>
+              <SelectItem value="7">7 days before</SelectItem>
+              <SelectItem value="14">14 days before</SelectItem>
+              <SelectItem value="30">30 days before</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <DocumentPicker value={values.docs} onChange={(docs) => set("docs", docs)} />
+    </div>
+  );
+}
+
+const EMPTY_TASK_FORM: TaskFormValues = {
+  title: "",
+  description: "",
+  dueDate: "",
+  remindDays: 3,
+  docs: [],
+  assigneeEmail: "",
+};
+
 function NewTaskDialog({
   open,
   onOpenChange,
@@ -512,38 +629,25 @@ function NewTaskDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onSubmit: (title: string, description: string, dueDate: string) => void;
+  onSubmit: (values: TaskFormValues) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [due, setDue] = useState("");
-  useEffect(() => { if (!open) { setTitle(""); setDesc(""); setDue(""); } }, [open]);
+  const [values, setValues] = useState<TaskFormValues>(EMPTY_TASK_FORM);
+  useEffect(() => { if (!open) setValues(EMPTY_TASK_FORM); }, [open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New task</DialogTitle>
-          <DialogDescription>Create a compliance follow-up task.</DialogDescription>
+          <DialogDescription>
+            Create a compliance follow-up, assign it, link regulations and set a reminder.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium">Title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Update incident response SLA" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Optional details" />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Target completion date</label>
-            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-          </div>
-        </div>
+        <TaskFields values={values} onChange={setValues} showAssignee />
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
-            onClick={() => title.trim() && onSubmit(title.trim(), desc.trim(), due)}
-            disabled={!title.trim()}
+            onClick={() => values.title.trim() && onSubmit({ ...values, title: values.title.trim() })}
+            disabled={!values.title.trim()}
             className="bg-gradient-brand text-white"
           >
             Create
@@ -616,16 +720,19 @@ function EditTaskDialog({
 }: {
   task: TaskRow | null;
   onClose: () => void;
-  onSave: (id: string, title: string, description: string, dueDate: string) => void;
+  onSave: (id: string, values: TaskFormValues) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [due, setDue] = useState("");
+  const [values, setValues] = useState<TaskFormValues>(EMPTY_TASK_FORM);
   useEffect(() => {
     if (task) {
-      setTitle(task.title);
-      setDesc(task.description ?? "");
-      setDue(task.due_date ?? "");
+      setValues({
+        title: task.title,
+        description: task.description ?? "",
+        dueDate: task.due_date ?? "",
+        remindDays: task.remind_days_before ?? 3,
+        docs: task.linked_docs ?? [],
+        assigneeEmail: "",
+      });
     }
   }, [task]);
   return (
@@ -633,30 +740,18 @@ function EditTaskDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit task</DialogTitle>
-          <DialogDescription>Update the title, description or target date.</DialogDescription>
+          <DialogDescription>
+            Update the details, target date, reminder lead time and linked documents.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium">Title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Description</label>
-            <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Target completion date</label>
-            <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-          </div>
-        </div>
+        <TaskFields values={values} onChange={setValues} showAssignee={false} />
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button
             className="bg-gradient-brand text-white"
-            disabled={!title.trim()}
-            onClick={() => task && onSave(task.id, title.trim(), desc.trim(), due)}
+            disabled={!values.title.trim()}
+            onClick={() => task && onSave(task.id, { ...values, title: values.title.trim() })}
           >
-
             Save
           </Button>
         </DialogFooter>
