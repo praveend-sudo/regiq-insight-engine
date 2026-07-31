@@ -1,13 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/regiq/AppLayout";
 import { SEED_NOTIFICATIONS } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { IssuerBadge } from "@/components/regiq/ReferencesPanel";
-import { Mail, MessageSquareText, Bell } from "lucide-react";
+import { Mail, MessageSquareText, Bell, FileText, AlarmClock } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/notifications")({
   component: NotificationsPage,
@@ -22,12 +23,15 @@ type Notif = {
   linked: string[];
   ai_insight: string | null;
   read: boolean;
+  category: string;
   created_at: string;
 };
 
 function NotificationsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"update" | "reminder">("update");
 
   useEffect(() => {
     void (async () => {
@@ -42,7 +46,6 @@ function NotificationsPage() {
         .order("created_at", { ascending: false });
 
       if (!data || data.length === 0) {
-        // seed
         const rows = SEED_NOTIFICATIONS.map((n) => ({ ...n, user_id: uid }));
         await supabase.from("notifications").insert(rows);
         const { data: fresh } = await supabase
@@ -63,6 +66,21 @@ function NotificationsPage() {
     await supabase.from("notifications").update({ read: true }).eq("id", id);
   };
 
+  const updates = useMemo(() => items.filter((n) => (n.category ?? "update") !== "reminder"), [items]);
+  const reminders = useMemo(() => items.filter((n) => n.category === "reminder"), [items]);
+  const shown = tab === "update" ? updates : reminders;
+
+  const draftMemo = (n: Notif) => {
+    void navigate({
+      to: "/app/memos",
+      search: {
+        change: `${n.title} — ${n.summary}`,
+        issuer: n.issuer ?? "",
+        notificationId: n.id,
+      },
+    });
+  };
+
   return (
     <AppLayout>
       <div className="mx-auto w-full max-w-4xl overflow-y-auto px-4 py-8 md:px-8">
@@ -73,17 +91,37 @@ function NotificationsPage() {
           <div>
             <h2 className="text-xl font-bold">Smart Notifications</h2>
             <p className="text-sm text-muted-foreground">
-              AI-summarized updates from regulators and internal document uploads.
+              Regulatory updates and deadline reminders, kept in separate streams.
             </p>
           </div>
         </div>
 
+        <div className="mb-4 flex w-fit gap-1 rounded-xl border bg-card p-1">
+          <TabBtn active={tab === "update"} onClick={() => setTab("update")}>
+            <Bell className="h-3.5 w-3.5" /> Regulatory updates ({updates.length})
+          </TabBtn>
+          <TabBtn active={tab === "reminder"} onClick={() => setTab("reminder")}>
+            <AlarmClock className="h-3.5 w-3.5" /> Reminders ({reminders.length})
+          </TabBtn>
+        </div>
+
         {loading ? (
           <div className="text-sm text-muted-foreground">Loading…</div>
+        ) : shown.length === 0 ? (
+          <div className="rounded-2xl border border-dashed bg-card/50 p-10 text-center">
+            <p className="font-semibold">
+              {tab === "reminder" ? "No reminders yet" : "No regulatory updates"}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {tab === "reminder"
+                ? "Task and reporting reminders appear here as their target dates approach."
+                : "New CBSL, SEC, CSE and IRD updates land here."}
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             <AnimatePresence initial={false}>
-              {items.map((n, i) => (
+              {shown.map((n, i) => (
                 <motion.div
                   key={n.id}
                   initial={{ opacity: 0, y: 12 }}
@@ -127,11 +165,17 @@ function NotificationsPage() {
                       )}
 
                       <div className="mt-4 flex flex-wrap gap-1.5">
+                        <Button
+                          size="sm"
+                          className="gap-1.5 bg-gradient-brand text-white"
+                          onClick={(e) => { e.stopPropagation(); draftMemo(n); }}
+                        >
+                          <FileText className="h-3.5 w-3.5" /> Draft memo
+                        </Button>
                         <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => toast.success("Summary email drafted")}>
                           <Mail className="h-3.5 w-3.5" /> Email summary
                         </Button>
                         <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => toast("Opening chat with context...")}>
-
                           <MessageSquareText className="h-3.5 w-3.5" /> Ask about this
                         </Button>
                       </div>
@@ -144,6 +188,20 @@ function NotificationsPage() {
         )}
       </div>
     </AppLayout>
+  );
+}
+
+function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+        active ? "bg-gradient-brand text-white shadow-card" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
