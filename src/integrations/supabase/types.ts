@@ -219,8 +219,10 @@ export type Database = {
           created_at: string
           id: string
           issuer: string | null
+          linked_docs: Json
           recipient_email: string | null
           sent_at: string | null
+          source_notification_id: string | null
           status: string
           title: string
           updated_at: string
@@ -232,8 +234,10 @@ export type Database = {
           created_at?: string
           id?: string
           issuer?: string | null
+          linked_docs?: Json
           recipient_email?: string | null
           sent_at?: string | null
+          source_notification_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -245,8 +249,10 @@ export type Database = {
           created_at?: string
           id?: string
           issuer?: string | null
+          linked_docs?: Json
           recipient_email?: string | null
           sent_at?: string | null
+          source_notification_id?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -257,6 +263,7 @@ export type Database = {
       notifications: {
         Row: {
           ai_insight: string | null
+          category: string
           created_at: string
           id: string
           impact: string
@@ -269,6 +276,7 @@ export type Database = {
         }
         Insert: {
           ai_insight?: string | null
+          category?: string
           created_at?: string
           id?: string
           impact?: string
@@ -281,6 +289,7 @@ export type Database = {
         }
         Update: {
           ai_insight?: string | null
+          category?: string
           created_at?: string
           id?: string
           impact?: string
@@ -354,7 +363,9 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          linked_docs: Json
           remarks: string | null
+          remind_days_before: number
           reminded_at: string | null
           source_answer: string | null
           source_question: string | null
@@ -369,7 +380,9 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          linked_docs?: Json
           remarks?: string | null
+          remind_days_before?: number
           reminded_at?: string | null
           source_answer?: string | null
           source_question?: string | null
@@ -384,7 +397,9 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          linked_docs?: Json
           remarks?: string | null
+          remind_days_before?: number
           reminded_at?: string | null
           source_answer?: string | null
           source_question?: string | null
