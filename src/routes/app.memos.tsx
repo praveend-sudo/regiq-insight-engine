@@ -261,16 +261,27 @@ function MemoEditor({
   onDelete,
 }: {
   memo: MemoRow;
-  onSave: (memo: MemoRow, title: string, body: string, docs: LinkedDoc[]) => void;
+  onSave: (
+    memo: MemoRow,
+    title: string,
+    body: string,
+    docs: LinkedDoc[],
+    followUp: string | null,
+    remindDays: number,
+  ) => void;
   onEmail: () => void;
   onDelete: () => void;
 }) {
   const [title, setTitle] = useState(memo.title);
   const [body, setBody] = useState(memo.body);
   const [docs, setDocs] = useState<LinkedDoc[]>(memo.linked_docs ?? []);
+  const [followUp, setFollowUp] = useState(memo.follow_up_date ?? "");
+  const [remindDays, setRemindDays] = useState(String(memo.remind_days_before ?? 3));
   const dirty =
     title !== memo.title ||
     body !== memo.body ||
+    (followUp || null) !== (memo.follow_up_date ?? null) ||
+    Number(remindDays || 0) !== (memo.remind_days_before ?? 3) ||
     JSON.stringify(docs) !== JSON.stringify(memo.linked_docs ?? []);
 
   return (
