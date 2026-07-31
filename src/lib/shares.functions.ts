@@ -28,12 +28,13 @@ export const listSharesForChat = createServerFn({ method: "GET" })
     const ids = (rows ?? []).map((r) => r.shared_with);
     const info: Record<string, { email: string | null; full_name: string | null }> = {};
     if (ids.length) {
-      const { data: profs } = await context.supabase
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      // Profiles are private; resolve display names with the server-only client.
+      const { data: profs } = await supabaseAdmin
         .from("profiles")
         .select("id, full_name")
         .in("id", ids);
       for (const p of profs ?? []) info[p.id] = { email: null, full_name: p.full_name };
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       for (const uid of ids) {
         const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
         if (u?.user?.email) {

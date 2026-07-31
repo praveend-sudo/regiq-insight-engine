@@ -54,7 +54,9 @@ export const listTasks = createServerFn({ method: "GET" })
       ),
     );
     if (ids.length === 0) return rows;
-    const { data: profiles } = await supabase
+    // Names of collaborators are resolved server-side only (profiles are private).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name")
       .in("id", ids);
